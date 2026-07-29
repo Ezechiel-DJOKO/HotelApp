@@ -83,23 +83,34 @@ exports.validateHotel = (req, res, next) => {
         email: Joi.string().email().allow('', null),
         telephone: Joi.string().required(),
         siteWeb: Joi.string().uri().allow('', null),
-        equipements: Joi.array().items(Joi.string()),
+        equipements: Joi.alternatives().try(
+            Joi.array().items(Joi.string()),
+            Joi.string()
+        ).optional(),
         fourchettePrix: Joi.object({
-            min: Joi.number().positive().required(),
-            max: Joi.number().positive().greater(Joi.ref('min')).required(),
+            min: Joi.number().min(0),
+            max: Joi.number().min(0),
             devise: Joi.string().default('XOF')
-        }).required(),
+        }).optional(),
+        'fourchettePrix[min]': Joi.number().min(0).optional(),
+        'fourchettePrix[max]': Joi.number().min(0).optional(),
         politiques: Joi.object({
             checkIn: Joi.string(),
             checkOut: Joi.string(),
             annulation: Joi.string(),
             animauxAcceptes: Joi.boolean()
-        }),
+        }).optional(),
         localisation: Joi.object({
             type: Joi.string().valid('Point').default('Point'),
-            coordinates: Joi.array().items(Joi.number()).length(2).required()
-        })
-    });
+            coordinates: Joi.array().items(Joi.number()).length(2)
+        }).optional(),
+        // ✅ Champs autorisés supplémentaires
+        images: Joi.any().optional(),
+        existingImages: Joi.any().optional(),
+        estVerifie: Joi.any().optional(),
+        estActif: Joi.any().optional()
+    }).unknown(true); // ✅ TRÈS IMPORTANT : autorise les champs inconnus
+    
     const { error } = schema.validate(req.body);
     if (error) return res.status(400).json({ success: false, message: error.details[0].message });
     next();

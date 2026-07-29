@@ -153,7 +153,7 @@ router.post('/', protect, authorize('owner', 'admin'), upload.array('images', 10
  *         required: true
  *         schema: { type: string }
  */
-router.put('/:id', protect, authorize('owner', 'admin'), upload.array('images', 10), validateHotel, hotelController.updateHotel);
+router.put('/:id', protect, authorize('owner', 'admin'), upload.array('images', 10), hotelController.updateHotel);
 router.delete('/:id', protect, authorize('owner', 'admin'), hotelController.deleteHotel);
 
 module.exports = router;

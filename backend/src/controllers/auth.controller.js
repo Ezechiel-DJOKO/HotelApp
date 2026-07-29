@@ -27,7 +27,8 @@ exports.inscription = async (req,res,next) => {
             password,
             nom,
             prenom,
-            phone: phone || ""
+            phone: phone || "",
+            role: "user"
         });
 
         // Génération de l'otp
@@ -85,12 +86,14 @@ exports.verificationOTP = async (req,res,next) => {
             const token = generateToken(utilisateur._id);
             successResponse(res,{
                 utilisateur: {
+                    _id: utilisateur._id,
                     id: utilisateur._id,
                     email: utilisateur.email,
                     nom: utilisateur.nom,
                     prenom: utilisateur.prenom,
                     phone: utilisateur.phone,
                     avatar: utilisateur.avatar,
+                    role: utilisateur.role,   // ← AJOUTER
                     isVerified: utilisateur.isVerified,
                     nomComplet: utilisateur.nomComplet,
                 },
@@ -164,12 +167,14 @@ exports.connexion = async (req,res,next) => {
         const token = generateToken(utilisateur._id);
         successResponse(res,{
             utilisateur: {
+                _id: utilisateur._id,
                 id: utilisateur._id,
                 email: utilisateur.email,
                 nom: utilisateur.nom,
                 prenom: utilisateur.prenom,
                 phone: utilisateur.phone,
                 avatar: utilisateur.avatar,
+                role: utilisateur.role, 
                 isVerified: utilisateur.isVerified,
                 nomComplet: utilisateur.nomComplet,
             },token

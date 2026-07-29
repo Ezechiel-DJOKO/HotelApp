@@ -10,7 +10,7 @@ const hotelSchema = new mongoose.Schema({
         enum: ['hotel', 'auberge', 'residence', 'guesthouse', 'camping', 'appartement'],
         default: 'hotel',
     },
-    etoiles: { type: Number, min: 1, max: 5 },
+    etoiles: { type: Number, min: 1, max: 5, default: 3 },
     adresse: { type: String, required: true },
     ville: {
         type: String,
@@ -22,8 +22,14 @@ const hotelSchema = new mongoose.Schema({
         ],
     },
     localisation: {
-        type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], index: '2dsphere' },
+        type: {
+            type: String,
+            enum: ['Point']
+        },
+        coordinates: {
+            type: [Number],
+            default: undefined
+        },
     },
     email: String,
     telephone: { type: String, required: true },
@@ -41,7 +47,7 @@ const hotelSchema = new mongoose.Schema({
         max: Number,
         devise: { type: String, default: 'XOF' },
     },
-    note: { type: Number, min: 1, max: 5, default: 0 },
+    note: { type: Number, min: 0, max: 5, default: 0 },
     nombreAvis: { type: Number, default: 0 },
     estVerifie: { type: Boolean, default: false },
     estActif: { type: Boolean, default: true },
@@ -52,7 +58,6 @@ const hotelSchema = new mongoose.Schema({
     toObject: { virtuals: true },
 });
 
-hotelSchema.index({ localisation: '2dsphere' });
 hotelSchema.index({ ville: 1, type: 1 });
 
 hotelSchema.pre('save', function (next) {
