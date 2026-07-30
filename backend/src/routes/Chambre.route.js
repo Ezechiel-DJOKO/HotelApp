@@ -66,32 +66,8 @@ router.get('/disponibilite', chambreController.checkDisponibilite);
  *               maxPersonnes: { type: integer }
  *               images: { type: array, items: { type: string, format: binary } }
  */
-router.post('/', protect, authorize('owner', 'admin'), upload.array('images', 5), validateChambre, chambreController.createChambre);
-/**
- * @swagger
- * /hotels/{hotelId}/chambres/{id}:
- *   put:
- *     summary: Modifier une chambre
- *     tags: [Chambres]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *   delete:
- *     summary: Supprimer une chambre
- *     tags: [Chambres]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- */
-router.put('/:id', protect, authorize('owner', 'admin'), upload.array('images', 5), validateChambre, chambreController.updateChambre);
+router.post('/', protect, authorize('owner', 'admin'), upload.array('images', 5), chambreController.createChambre);
+router.put('/:id', protect, authorize('owner', 'admin'), upload.array('images', 5), chambreController.updateChambre);
 router.delete('/:id', protect, authorize('owner', 'admin'), chambreController.deleteChambre);
 
 module.exports = router;
