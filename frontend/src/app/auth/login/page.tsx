@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
-import { Hotel, Mail, Lock, Loader2 } from "lucide-react";
+import { Hotel, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,20 +26,14 @@ export default function LoginPage() {
       const res = await authService.login(form.email, form.password);
       const { token, utilisateur } = res.data;
 
-      console.log("🔍 DEBUG - Utilisateur reçu:", utilisateur);
-      console.log("🔍 DEBUG - Rôle:", utilisateur.role);
-
       setAuth(utilisateur, token);
       toast.success(`Bienvenue ${utilisateur.prenom} !`);
 
       if (utilisateur.role === "admin") {
-        console.log("➡️ Redirection vers /admin");
         router.push("/admin");
       } else if (utilisateur.role === "owner") {
-        console.log("➡️ Redirection vers /owner");
         router.push("/owner");
       } else {
-        console.log("➡️ Redirection vers /client (default)");
         router.push("/client");
       }
     } catch (error) {
@@ -90,6 +85,7 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Mot de passe avec bouton voir/masquer */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">
@@ -105,14 +101,30 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  aria-label={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 

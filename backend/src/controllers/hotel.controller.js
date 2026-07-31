@@ -72,10 +72,20 @@ exports.createHotel = async (req, res, next) => {
 
         if (req.body.etoiles) req.body.etoiles = parseInt(req.body.etoiles);
         
-        if (req.body['fourchettePrix[min]'] !== undefined || req.body['fourchettePrix[max]'] !== undefined) {
+        // Gérer les 2 formats de fourchettePrix
+        let prixMinRaw, prixMaxRaw;
+        if (req.body.fourchettePrix && typeof req.body.fourchettePrix === 'object') {
+            prixMinRaw = req.body.fourchettePrix.min;
+            prixMaxRaw = req.body.fourchettePrix.max;
+        } else {
+            prixMinRaw = req.body['fourchettePrix[min]'];
+            prixMaxRaw = req.body['fourchettePrix[max]'];
+        }
+
+        if (prixMinRaw !== undefined || prixMaxRaw !== undefined) {
             req.body.fourchettePrix = {
-                min: parseInt(req.body['fourchettePrix[min]']) || 0,
-                max: parseInt(req.body['fourchettePrix[max]']) || 0,
+                min: parseInt(prixMinRaw) || 0,
+                max: parseInt(prixMaxRaw) || 0,
                 devise: 'XOF'
             };
             delete req.body['fourchettePrix[min]'];
@@ -92,7 +102,7 @@ exports.createHotel = async (req, res, next) => {
 
 exports.updateHotel = async (req, res, next) => {
     try {
-        console.log("📥 Update hotel - Body:", req.body);
+        console.log("📥 Update hotel - Body brut:", req.body);
         console.log("📥 Update hotel - Files:", req.files?.length || 0);
 
         let hotel = await Hotel.findById(req.params.id);
@@ -107,35 +117,29 @@ exports.updateHotel = async (req, res, next) => {
         // ============ GESTION DES IMAGES ============
         let finalImages = [];
 
-        // 1) Récupérer les images conservées depuis existingImages
-        if (req.body.existingImages) {
+        if (req.body.existingImages !== undefined) {
             try {
                 const parsed = typeof req.body.existingImages === 'string' 
                     ? JSON.parse(req.body.existingImages)
                     : req.body.existingImages;
                 finalImages = Array.isArray(parsed) ? parsed : [];
             } catch (e) {
-                console.warn("⚠️ Impossible de parser existingImages, on garde les images actuelles");
+                console.warn("⚠️ Impossible de parser existingImages");
                 finalImages = hotel.images || [];
             }
         } else {
-            // Si pas de champ existingImages → on garde toutes les anciennes
             finalImages = [...(hotel.images || [])];
         }
 
-        // 2) Ajouter les nouvelles images uploadées
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 finalImages.push(`${baseUrl}/uploads/${file.filename}`);
             }
         }
 
-        console.log("🖼️ Images finales:", finalImages);
-
-        // ============ PRÉPARER LES DONNÉES DE MISE À JOUR ============
+        // ============ PRÉPARER LES DONNÉES ============
         const updateData = {};
 
-        // Champs texte simples
         const simpleFields = ['nom', 'description', 'type', 'adresse', 'ville', 'telephone', 'email', 'siteWeb'];
         simpleFields.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== '') {
@@ -143,39 +147,61 @@ exports.updateHotel = async (req, res, next) => {
             }
         });
 
-        // Étoiles (convertir en nombre)
-        if (req.body.etoiles !== undefined) {
+        if (req.body.etoiles !== undefined && req.body.etoiles !== '') {
             updateData.etoiles = parseInt(req.body.etoiles);
         }
 
-        // Fourchette de prix (multipart)
-        if (req.body['fourchettePrix[min]'] !== undefined || req.body['fourchettePrix[max]'] !== undefined) {
-            updateData.fourchettePrix = {
-                min: parseInt(req.body['fourchettePrix[min]']) || 0,
-                max: parseInt(req.body['fourchettePrix[max]']) || 0,
-                devise: 'XOF'
-            };
+        // ✅ FIX FOURCHETTE PRIX : gérer les 2 formats
+        // Format 1 : fourchettePrix[min] (string séparé) 
+        // Format 2 : fourchettePrix.min (objet imbriqué déjà parsé par Express)
+
+        let prixMinRaw, prixMaxRaw;
+
+        // Vérifier format objet (Express parse déjà)
+        if (req.body.fourchettePrix && typeof req.body.fourchettePrix === 'object') {
+            prixMinRaw = req.body.fourchettePrix.min;
+            prixMaxRaw = req.body.fourchettePrix.max;
+        } else {
+            // Vérifier format string [key]
+            prixMinRaw = req.body['fourchettePrix[min]'];
+            prixMaxRaw = req.body['fourchettePrix[max]'];
         }
 
-        // Images
+        console.log("💰 prixMinRaw:", prixMinRaw, "type:", typeof prixMinRaw);
+        console.log("💰 prixMaxRaw:", prixMaxRaw, "type:", typeof prixMaxRaw);
+
+        if (prixMinRaw !== undefined || prixMaxRaw !== undefined) {
+            const prixMin = (prixMinRaw !== undefined && prixMinRaw !== '' && prixMinRaw !== null)
+                ? parseInt(prixMinRaw) 
+                : (hotel.fourchettePrix?.min || 0);
+            const prixMax = (prixMaxRaw !== undefined && prixMaxRaw !== '' && prixMaxRaw !== null)
+                ? parseInt(prixMaxRaw) 
+                : (hotel.fourchettePrix?.max || 0);
+            
+            updateData.fourchettePrix = {
+                min: isNaN(prixMin) ? 0 : prixMin,
+                max: isNaN(prixMax) ? 0 : prixMax,
+                devise: 'XOF'
+            };
+            console.log("💰 fourchettePrix finale:", updateData.fourchettePrix);
+        }
+
         updateData.images = finalImages;
 
-        // Slug si le nom change
         if (updateData.nom) {
             const slugify = require('slugify');
             updateData.slug = slugify(updateData.nom, { lower: true, strict: true });
         }
 
-        console.log("📝 Update data:", updateData);
+        console.log("📝 Update data FINAL:", updateData);
 
-        // ============ MISE À JOUR ============
         hotel = await Hotel.findByIdAndUpdate(
             req.params.id, 
             updateData, 
             { new: true, runValidators: true }
         );
         
-        console.log("✅ Hôtel mis à jour");
+        console.log("✅ Hôtel mis à jour - fourchettePrix:", hotel.fourchettePrix);
         successResponse(res, { hotel }, 'Hotel mis a jour');
     } catch (error) {
         console.error("❌ Erreur updateHotel:", error);

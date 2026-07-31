@@ -4,12 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
-import { Hotel, Mail, Lock, User, Phone, Loader2 } from "lucide-react";
+import {
+  Hotel,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
     prenom: "",
     nom: "",
@@ -32,6 +43,11 @@ export default function RegisterPage() {
     }
     if (form.password.length < 6) {
       toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(form.email)) {
+      toast.error("Format d'email invalide");
       return;
     }
 
@@ -146,6 +162,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Mot de passe avec bouton voir/masquer */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mot de passe
@@ -153,18 +170,35 @@ export default function RegisterPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   required
                   minLength={6}
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  aria-label={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
+            {/* Confirmation mot de passe avec bouton voir/masquer */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Confirmer le mot de passe
@@ -172,16 +206,46 @@ export default function RegisterPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   name="password_confirm"
                   value={form.password_confirm}
                   onChange={handleChange}
                   required
                   minLength={6}
-                  className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
+              {/* Indicateur de correspondance */}
+              {form.password_confirm && (
+                <p
+                  className={`text-xs mt-1 ${
+                    form.password === form.password_confirm
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {form.password === form.password_confirm
+                    ? "✓ Les mots de passe correspondent"
+                    : "✗ Les mots de passe ne correspondent pas"}
+                </p>
+              )}
             </div>
 
             <button

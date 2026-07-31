@@ -15,6 +15,14 @@ exports.inscription = async (req,res,next) => {
             return errorResponse(res,"Le mot de passe est différent de celui confirmé.",400);
         }
 
+        // ✅ VALIDATION EMAIL PROFONDE (avant de créer le compte)
+        const { validateEmailDeep } = require('../util/emailValidator');
+        const emailCheck = await validateEmailDeep(email);
+        if (!emailCheck.valid) {
+            console.log(`❌ Email refusé : ${email} - ${emailCheck.error}`);
+            return errorResponse(res, emailCheck.error, 400);
+        }
+
         // Vérification de l'existence de l'email
         const existingEmail = await Utilisateur.findOne({email});
         if (existingEmail) {
@@ -61,12 +69,23 @@ exports.inscription = async (req,res,next) => {
                 otpCode: process.env.NODE_ENV === 'development' ? otp : undefined
             },'Inscription réussie. Vérifier votre email pour le code OTP.', 201);
         } catch (emailError) {
-            console.error('Erreur détaillée lors de l\'envoi email:', emailError);
+            console.error('❌ Erreur envoi email:', emailError.message);
+            
+            // Supprimer l'utilisateur créé si l'email a échoué
             await Utilisateur.findByIdAndDelete(utilisateur._id);
-            if (process.env.NODE_ENV === 'development') {
-                return errorResponse(res, `Erreur email: ${emailError.message}`, 500);
+            
+            // Message d'erreur clair pour le frontend
+            let userMessage = "L'adresse email fournie n'est pas valide ou n'existe pas.";
+            
+            if (emailError.message.includes('Format')) {
+                userMessage = "Le format de l'email est invalide.";
+            } else if (emailError.message.includes('domaine') || emailError.message.includes('Domaine')) {
+                userMessage = "Ce domaine email n'existe pas. Vérifiez votre adresse.";
+            } else if (emailError.message.includes('rejeté')) {
+                userMessage = "L'adresse email a été rejetée. Elle est peut-être invalide.";
             }
-            return errorResponse(res, "Erreur lors de l'envoi de l'email. Veuillez réessayer.", 500);
+            
+            return errorResponse(res, userMessage, 400);
         }
     }catch (error){
         next(error);

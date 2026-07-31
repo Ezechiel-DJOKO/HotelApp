@@ -88,21 +88,28 @@ export default function AdminEditHotelPage() {
     setSaving(true);
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (key === "prixMin") formData.append("fourchettePrix[min]", value);
-        else if (key === "prixMax") formData.append("fourchettePrix[max]", value);
-        else formData.append(key, value);
-      });
       
-      // ⚡ IMPORTANT : envoyer les images existantes conservées
+      // Champs texte
+      formData.append("nom", form.nom);
+      formData.append("description", form.description);
+      formData.append("type", form.type);
+      formData.append("etoiles", form.etoiles);
+      formData.append("adresse", form.adresse);
+      formData.append("ville", form.ville);
+      formData.append("telephone", form.telephone);
+      formData.append("email", form.email);
+      
+      // ✅ Toujours envoyer les prix (même 0)
+      formData.append("fourchettePrix[min]", form.prixMin || "0");
+      formData.append("fourchettePrix[max]", form.prixMax || "0");
+      
+      // Images
       formData.append("existingImages", JSON.stringify(existingImages));
-      
-      // ⚡ Envoyer les nouvelles images
       images.forEach((img) => formData.append("images", img));
 
       await hotelService.updateHotel(hotel._id, formData);
       toast.success("Hôtel modifié !");
-      router.push(`/admin/hotels/${hotel._id}`);
+      router.push("/owner/hotel");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur");
     } finally {

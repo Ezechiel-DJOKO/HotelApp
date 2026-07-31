@@ -168,14 +168,29 @@ export default function OwnerReservationDetailPage() {
               </Button>
             </div>
           ) : resa.statut === "confirmee" ? (
-            <Button
-              variant="outline"
-              onClick={() => handleUpdate("terminee")}
-              disabled={updating}
-              icon={<CheckCheck className="w-4 h-4" />}
-            >
-              Marquer terminée
-            </Button>
+            (() => {
+              const maintenant = new Date();
+              const dateDepart = new Date(resa.dateDepart);
+              const peutTerminer = maintenant >= dateDepart;
+              const joursRestants = Math.ceil(
+                (dateDepart.getTime() - maintenant.getTime()) / (1000 * 60 * 60 * 24)
+              );
+
+              return peutTerminer ? (
+                <Button
+                  variant="outline"
+                  onClick={() => handleUpdate("terminee")}
+                  disabled={updating}
+                  icon={<CheckCheck className="w-4 h-4" />}
+                >
+                  Marquer terminée
+                </Button>
+              ) : (
+                <div className="px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  ⏳ Terminée disponible dans {joursRestants} jour{joursRestants > 1 ? "s" : ""}
+                </div>
+              );
+            })()
           ) : null
         }
       />

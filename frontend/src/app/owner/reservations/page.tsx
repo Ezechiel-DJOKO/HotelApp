@@ -336,18 +336,29 @@ export default function OwnerReservationsPage() {
                           </Button>
                         </div>
                       )}
-                      {resa.statut === "confirmee" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleUpdateStatut(resa._id, "terminee")
-                          }
-                          icon={<CheckCheck className="w-3 h-3" />}
-                        >
-                          Marquer terminée
-                        </Button>
-                      )}
+                      {resa.statut === "confirmee" && (() => {
+                        const maintenant = new Date();
+                        const dateDepart = new Date(resa.dateDepart);
+                        const peutTerminer = maintenant >= dateDepart;
+                        const joursRestants = Math.ceil(
+                          (dateDepart.getTime() - maintenant.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+
+                        return peutTerminer ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUpdateStatut(resa._id, "terminee")}
+                            icon={<CheckCheck className="w-3 h-3" />}
+                          >
+                            Marquer terminée
+                          </Button>
+                        ) : (
+                          <div className="text-xs text-slate-500 italic px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            ⏳ {joursRestants} jour{joursRestants > 1 ? "s" : ""} restant{joursRestants > 1 ? "s" : ""}
+                          </div>
+                        );
+                      })()}
                       <Link href={`/owner/reservations/${resa._id}`}>
                         <Button
                           size="sm"

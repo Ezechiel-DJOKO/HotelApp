@@ -84,18 +84,47 @@ exports.updateStatut = async (req, res, next) => {
         const reservation = await Reservation.findById(req.params.id);
         if (!reservation) return errorResponse(res, 'Reservation non trouvee', 404);
         
-        // CORRECTION SECURITE : verifier que le proprietaire est celui de l'hotel
+        // Vérifier que le propriétaire est celui de l'hôtel
         const hotel = await Hotel.findById(reservation.hotel);
         if (req.utilisateur.role !== 'admin' && 
             hotel.proprietaire.toString() !== req.utilisateur._id.toString()) {
             return errorResponse(res, 'Non autorise', 403);
         }
-        
+
+        const nouveauStatut = req.body.statut;
         const oldStatus = reservation.statut;
-        reservation.statut = req.body.statut;
+
+        // ✅ VÉRIFICATION : "terminée" seulement après la date de départ
+        if (nouveauStatut === 'terminee') {
+            const maintenant = new Date();
+            const dateDepart = new Date(reservation.dateDepart);
+            
+            if (maintenant < dateDepart) {
+                const joursRestants = Math.ceil(
+                    (dateDepart - maintenant) / (1000 * 60 * 60 * 24)
+                );
+                return errorResponse(
+                    res, 
+                    `Impossible de marquer terminée avant la date de départ (${dateDepart.toLocaleDateString('fr-FR')}). Encore ${joursRestants} jour(s) à attendre.`, 
+                    400
+                );
+            }
+        }
+
+        // ✅ VÉRIFICATION : "terminée" nécessite d'être "confirmée" d'abord
+        if (nouveauStatut === 'terminee' && oldStatus !== 'confirmee') {
+            return errorResponse(
+                res, 
+                'La réservation doit être confirmée avant d\'être marquée terminée.', 
+                400
+            );
+        }
+
+        reservation.statut = nouveauStatut;
         await reservation.save();
         
-        if (req.body.statut === 'annulee' && oldStatus !== 'annulee') {
+        // Si annulée → libérer la chambre
+        if (nouveauStatut === 'annulee' && oldStatus !== 'annulee') {
             const chambre = await Chambre.findById(reservation.chambre);
             if (chambre) {
                 chambre.quantiteDisponible = Math.min(chambre.quantiteDisponible + 1, chambre.quantiteTotale);
@@ -104,6 +133,9 @@ exports.updateStatut = async (req, res, next) => {
             }
         }
         
-        successResponse(res, { reservation }, 'Statut mis a jour');
-    } catch (error) { next(error); }
+        successResponse(res, { reservation }, `Statut mis à jour : ${nouveauStatut}`);
+    } catch (error) {
+        console.error('❌ Erreur updateStatut:', error);
+        next(error);
+    }
 };

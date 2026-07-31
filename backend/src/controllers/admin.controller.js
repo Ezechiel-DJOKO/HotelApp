@@ -79,10 +79,31 @@ exports.createHotelWithOwner = async (req, res, next) => {
             return errorResponse(res, "Le numéro de téléphone de l'hôtel est obligatoire.", 400);
         }
 
+        // ✅ VALIDATION EMAIL PROFONDE
+        const { validateEmailDeep } = require('../util/emailValidator');
+        const emailCheck = await validateEmailDeep(ownerEmail);
+        if (!emailCheck.valid) {
+            console.log(`❌ Email owner refusé : ${ownerEmail} - ${emailCheck.error}`);
+            return errorResponse(res, `Email invalide : ${emailCheck.error}`, 400);
+        }
+
         // Vérifier si l'email owner existe déjà
         const existingUser = await Utilisateur.findOne({ email: ownerEmail });
         if (existingUser) {
             return errorResponse(res, "Cet email est déjà utilisé.", 400);
+        }
+
+        // ✅ VALIDATION EMAIL avant tout
+        const { validateEmail, validateEmailDomain } = require('../util/emailValidator');
+
+        const formatCheck = validateEmail(ownerEmail);
+        if (!formatCheck.valid) {
+            return errorResponse(res, `Email invalide : ${formatCheck.error}`, 400);
+        }
+
+        const domainCheck = await validateEmailDomain(ownerEmail);
+        if (!domainCheck.valid) {
+            return errorResponse(res, `Email invalide : ${domainCheck.error}`, 400);
         }
 
         // Générer mot de passe

@@ -20,6 +20,7 @@ import PublicNavbar from "@/components/shared/public/PublicNavbar";
 import HotelCard from "@/components/shared/public/HotelCard";
 import Loader from "@/components/shared/ui/Loader";
 import Button from "@/components/shared/ui/Button";
+import BeninFlag from "@/components/shared/ui/BeninFlag";
 
 export default function HomePage() {
   const router = useRouter();
@@ -214,22 +215,17 @@ export default function HomePage() {
                 d&apos;hôtels au Bénin
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {/* Bouton principal : blanc avec texte bleu bien visible */}
                 <Link href="/auth/register">
-                  <Button
-                    size="lg"
-                    className="bg-white text-blue-600 hover:bg-blue-50"
-                  >
-                    Créer mon compte
-                  </Button>
+                  <button className="w-full sm:w-auto bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition shadow-lg inline-flex items-center justify-center gap-2">
+                    <span>Créer mon compte</span>
+                  </button>
                 </Link>
+                {/* Bouton secondaire : transparent avec bordure blanche */}
                 <Link href="/hotels">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-white text-white hover:bg-white/10"
-                  >
-                    Explorer les hôtels
-                  </Button>
+                  <button className="w-full sm:w-auto bg-transparent border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white hover:text-blue-600 transition inline-flex items-center justify-center gap-2">
+                    <span>Explorer les hôtels</span>
+                  </button>
                 </Link>
               </div>
             </div>
