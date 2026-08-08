@@ -14,6 +14,13 @@ import {
   Key,
   X,
   ShieldAlert,
+  CreditCard,
+  Wallet,
+  UserPlus,
+  Bell,
+  Settings,
+  HelpCircle,
+  TrendingUp,
 } from "lucide-react";
 
 interface MenuItem {
@@ -76,27 +83,62 @@ export default function AdminSidebar({
           icon: <ClipboardList className="w-5 h-5" />,
         },
         {
+          label: "Transactions",
+          href: "/admin/transactions",
+          icon: <CreditCard className="w-5 h-5" />,
+        },
+        {
+          label: "Reversements",
+          href: "/admin/reversements",
+          icon: <Wallet className="w-5 h-5" />,
+        },
+        {
           label: "Vérifications",
           href: "/admin/verifications",
           icon: <ShieldCheck className="w-5 h-5" />,
         },
+        {
+          label: "Demandes propriétaires",
+          href: "/admin/demandes-proprietaire",
+          icon: <UserPlus className="w-5 h-5" />,
+        },
+        {
+          label: "Opportunités",
+          href: "/admin/opportunites",
+          icon: <TrendingUp className="w-5 h-5" />,
+        },
       ],
     },
     {
-      title: "Mon compte",
-      items: [
-        {
-          label: "Profil",
-          href: "/admin/profil",
-          icon: <User className="w-5 h-5" />,
-        },
-        {
-          label: "Mot de passe",
-          href: "/admin/password",
-          icon: <Key className="w-5 h-5" />,
-        },
-      ],
+  title: "Mon compte",
+  items: [
+    {
+      label: "Profil",
+      href: "/admin/profil",
+      icon: <User className="w-5 h-5" />,
     },
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: <Bell className="w-5 h-5" />,
+    },
+    {
+      label: "Paramètres",
+      href: "/parametres",
+      icon: <Settings className="w-5 h-5" />,
+    },
+    {
+      label: "Aide",
+      href: "/aide",
+      icon: <HelpCircle className="w-5 h-5" />,
+    },
+    {
+      label: "Mot de passe",
+      href: "/admin/password",
+      icon: <Key className="w-5 h-5" />,
+    },
+  ],
+},
   ];
 
   const SidebarContent = () => (

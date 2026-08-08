@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Power,
   PowerOff,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -26,6 +27,7 @@ import Badge from "@/components/shared/ui/Badge";
 import Loader from "@/components/shared/ui/Loader";
 import EmptyState from "@/components/shared/ui/EmptyState";
 import Input from "@/components/shared/ui/Input";
+import DeleteHotelModal from "@/components/admin/hotels/DeleteHotelModal";
 
 interface HotelWithOwner extends Hotel {
   proprietaire?: {
@@ -40,7 +42,12 @@ export default function AdminHotelsPage() {
   const [hotels, setHotels] = useState<HotelWithOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "verified" | "unverified" | "inactive">("all");
+  const [filter, setFilter] = useState<
+    "all" | "verified" | "unverified" | "inactive"
+  >("all");
+  const [hotelToDelete, setHotelToDelete] = useState<HotelWithOwner | null>(
+    null
+  );
 
   const load = useCallback(async () => {
     try {
@@ -163,33 +170,39 @@ export default function AdminHotelsPage() {
               className="overflow-hidden"
             >
               <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
-  {hotel.images?.[0] ? (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img
-    src={hotel.images[0]}
-    alt={hotel.nom}
-    className="absolute inset-0 w-full h-full object-cover"
-  />
-) : (
-    <div className="w-full h-full flex items-center justify-center">
-      <HotelIcon className="w-12 h-12 text-slate-300" />
-    </div>
-  )}
-  <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-    {hotel.estVerifie ? (
-      <Badge variant="success" icon={<CheckCircle className="w-3 h-3" />}>
-        Vérifié
-      </Badge>
-    ) : (
-      <Badge variant="warning">Non vérifié</Badge>
-    )}
-    {!hotel.estActif && (
-      <Badge variant="danger" icon={<XCircle className="w-3 h-3" />}>
-        Inactif
-      </Badge>
-    )}
-  </div>
-</div>
+                {hotel.images?.[0] ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={hotel.images[0]}
+                    alt={hotel.nom}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <HotelIcon className="w-12 h-12 text-slate-300" />
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                  {hotel.estVerifie ? (
+                    <Badge
+                      variant="success"
+                      icon={<CheckCircle className="w-3 h-3" />}
+                    >
+                      Vérifié
+                    </Badge>
+                  ) : (
+                    <Badge variant="warning">Non vérifié</Badge>
+                  )}
+                  {!hotel.estActif && (
+                    <Badge
+                      variant="danger"
+                      icon={<XCircle className="w-3 h-3" />}
+                    >
+                      Inactif
+                    </Badge>
+                  )}
+                </div>
+              </div>
 
               <div className="p-5">
                 <div className="flex items-start justify-between mb-2">
@@ -210,7 +223,9 @@ export default function AdminHotelsPage() {
 
                 {hotel.proprietaire && (
                   <div className="mb-3 pb-3 border-b border-slate-100">
-                    <p className="text-xs text-slate-500 mb-0.5">Propriétaire</p>
+                    <p className="text-xs text-slate-500 mb-0.5">
+                      Propriétaire
+                    </p>
                     <p className="text-sm font-medium text-slate-700">
                       {hotel.proprietaire.prenom} {hotel.proprietaire.nom}
                     </p>
@@ -260,11 +275,43 @@ export default function AdminHotelsPage() {
                   >
                     {hotel.estActif ? "Désactiver" : "Activer"}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHotelToDelete(hotel)}
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Modal de suppression */}
+      {hotelToDelete && (
+        <DeleteHotelModal
+          isOpen={!!hotelToDelete}
+          onClose={() => setHotelToDelete(null)}
+          hotel={{
+            _id: hotelToDelete._id,
+            nom: hotelToDelete.nom,
+            ville: hotelToDelete.ville,
+            etoiles: hotelToDelete.etoiles,
+            proprietaire: hotelToDelete.proprietaire,
+          }}
+          stats={{
+            chambres: 0,
+            reservations: 0,
+            avis: hotelToDelete.nombreAvis || 0,
+          }}
+          onSuccess={() => {
+            setHotelToDelete(null);
+            load();
+          }}
+        />
       )}
     </div>
   );

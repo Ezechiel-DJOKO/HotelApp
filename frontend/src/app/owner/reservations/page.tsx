@@ -14,6 +14,7 @@ import {
   CheckCheck,
   Calendar,
   Users,
+  CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -43,7 +44,7 @@ const statutConfig: Record<
   ReservationStatut,
   {
     label: string;
-    variant: "warning" | "success" | "danger" | "default";
+    variant: "default" | "primary" | "success" | "warning" | "danger" | "purple";
     icon: React.ReactNode;
   }
 > = {
@@ -66,6 +67,11 @@ const statutConfig: Record<
     label: "Terminée",
     variant: "default",
     icon: <CheckCheck className="w-3 h-3" />,
+  },
+  payee: {
+    label: "Payée",
+    variant: "primary",
+    icon: <CreditCard className="w-3 h-3" />,
   },
 };
 
@@ -311,14 +317,12 @@ export default function OwnerReservationsPage() {
                       <p className="text-xs text-slate-500">XOF</p>
                     </div>
                     <div className="flex flex-col gap-2">
-                      {resa.statut === "en_attente" && (
+                      {(resa.statut === "en_attente" || resa.statut === "payee") && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="success"
-                            onClick={() =>
-                              handleUpdateStatut(resa._id, "confirmee")
-                            }
+                            onClick={() => handleUpdateStatut(resa._id, "confirmee")}
                             icon={<CheckCircle className="w-3 h-3" />}
                           >
                             Confirmer
@@ -326,9 +330,7 @@ export default function OwnerReservationsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              handleUpdateStatut(resa._id, "annulee")
-                            }
+                            onClick={() => handleUpdateStatut(resa._id, "annulee")}
                             className="text-red-600 border-red-200 hover:bg-red-50"
                             icon={<XCircle className="w-3 h-3" />}
                           >

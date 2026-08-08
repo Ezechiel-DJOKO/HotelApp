@@ -13,8 +13,8 @@ const reservationSchema = new mongoose.Schema({
     prixTotal: { type: Number, required: true },
     statut: {
         type: String,
-        enum: ['en_attente', 'confirmee', 'annulee', 'terminee'],
-        default: 'en_attente',
+        enum: ['en_attente', 'payee', 'confirmee', 'annulee', 'terminee'],
+        default: 'en_attente'
     },
     demandesSpeciales: String,
     contact: {
@@ -22,6 +22,10 @@ const reservationSchema = new mongoose.Schema({
         email: String,
         telephone: String,
     },
+    motifAnnulation: {
+        type: String,
+        default: null
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Reservation', reservationSchema);

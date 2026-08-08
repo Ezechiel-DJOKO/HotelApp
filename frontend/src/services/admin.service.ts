@@ -114,4 +114,22 @@ export const adminService = {
     );
     return res.data;
   },
+
+  // Supprimer un hôtel (avec cascade)
+  deleteHotel: async (id: string, raison?: string) => {
+    const res = await api.delete<
+      ApiResponse<{
+        hotelSupprime: string;
+        statistiques: {
+          chambres: number;
+          reservations: number;
+          avis: number;
+          reservationsActives: number;
+        };
+      }>
+    >(`/admin/hotels/${id}`, {
+      data: { raison },
+    });
+    return res.data;
+  },
 };

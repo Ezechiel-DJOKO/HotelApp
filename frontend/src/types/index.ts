@@ -11,6 +11,8 @@ export interface User {
   role: UserRole;
   isVerified: boolean;
   nomComplet?: string;
+  createdAt?: string;    // ✅ AJOUT
+  updatedAt?: string;    // ✅ AJOUT
 }
 
 // ============ HOTEL ============
@@ -77,6 +79,7 @@ export interface Chambre {
 // ============ RESERVATION ============
 export type ReservationStatut =
   | "en_attente"
+  | "payee"
   | "confirmee"
   | "annulee"
   | "terminee";
@@ -120,4 +123,91 @@ export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
+}
+
+
+// ============ NOTIFICATIONS ============
+export type NotificationType =
+  | "nouvelle_reservation"
+  | "reservation_confirmee"
+  | "reservation_annulee"
+  | "reservation_terminee"
+  | "nouvel_avis"
+  | "nouvel_hotel"
+  | "nouveau_client"
+  | "hotel_verifie"
+  | "paiement_recu"
+  | "systeme";
+
+export type NotificationCouleur =
+  | "blue"
+  | "green"
+  | "red"
+  | "yellow"
+  | "purple"
+  | "gray";
+
+export interface Notification {
+  _id: string;
+  utilisateur: string;
+  type: NotificationType;
+  titre: string;
+  message: string;
+  icone: string;
+  couleur: NotificationCouleur;
+  lien?: string;
+  data?: Record<string, unknown>;
+  lue: boolean;
+  dateLu?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============ TRANSACTION ============
+export type PaymentMethod =
+  | "mtn_momo"
+  | "moov_money"
+  | "orange_money"
+  | "wave"
+  | "carte_visa"
+  | "carte_mastercard"
+  | "demo";
+
+export type TransactionStatut =
+  | "en_attente"
+  | "reussi"
+  | "echoue"
+  | "rembourse";
+
+export interface Transaction {
+  _id: string;
+  reservation: string | Reservation;
+  utilisateur: string | User;
+  hotel: string | Hotel;
+  numeroTransaction: string;
+  montantTotal: number;
+  tauxCommission: number;
+  montantCommission: number;
+  montantHotel: number;
+  devise: string;
+  methode: PaymentMethod;
+  telephonePayeur?: string;
+  statut: TransactionStatut;
+  referenceExterne?: string;
+  numeroReçu?: string;
+  receiptPdfPath?: string;
+  qrCodeData?: string;
+  reverse: boolean;
+  dateReversement?: string;
+  erreur?: string;
+  datePaiement?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentMethodOption {
+  id: PaymentMethod;
+  nom: string;
+  icon: string;
+  couleur: string;
 }

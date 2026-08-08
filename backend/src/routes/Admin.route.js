@@ -25,6 +25,10 @@ router.get('/hotels', adminController.getAllHotels);
 router.put('/hotels/:id/verify', adminController.verifyHotel);
 router.put('/hotels/:id/toggle-active', adminController.toggleHotelActive);
 
+
+// Suppression d'un hôtel (avec cascade)
+router.delete('/hotels/:id', adminController.deleteHotel);
+
 // ============================================
 // GESTION DES UTILISATEURS
 // ============================================

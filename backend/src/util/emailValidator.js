@@ -30,7 +30,7 @@ const validateEmailFormat = (email) => {
  * - Detection email jetable (temp-mail, etc.)
  */
 const validateEmailDeep = async (email) => {
-    console.log(`🔍 Validation profonde de l'email : ${email}`);
+    console.log(`🔍 Validation email : ${email}`);
 
     // Vérification 1 : format basique
     const formatCheck = validateEmailFormat(email);
@@ -38,43 +38,41 @@ const validateEmailDeep = async (email) => {
         return formatCheck;
     }
 
+    // En mode développement : validation légère (pas de MX check)
+    if (process.env.NODE_ENV === 'development') {
+        console.log('   Mode DEV : validation MX ignorée');
+        return { valid: true };
+    }
+
+    // En production : validation complète
     try {
-        // Vérification 2 : validation profonde (SMTP + DNS + format + disposable)
         const result = await emailValidator.validate({
             email: email,
             sender: process.env.EMAIL_USER || 'noreply@hotelbenin.bj',
             validateRegex: true,
-            validateMx: true,           // Le domaine a-t-il des serveurs mail ?
-            validateTypo: true,         // Détection des typos (gmial.com → gmail.com)
-            validateDisposable: true,   // Bloque les emails jetables (temp-mail, yopmail, etc.)
-            validateSMTP: true          // ✅ Vérifie SMTP que l'adresse existe
+            validateMx: true,
+            validateTypo: false,
+            validateDisposable: true,
+            validateSMTP: false
         });
 
         console.log(`   Résultat :`, {
             valid: result.valid,
             reason: result.reason,
-            validators: result.validators
         });
 
         if (!result.valid) {
             let error = "Email invalide";
 
-            // Traduction des erreurs
             switch (result.reason) {
                 case 'regex':
                     error = "Format d'email invalide";
                     break;
-                case 'typo':
-                    error = `Faute de frappe détectée. Vouliez-vous dire "${result.validators.typo?.reason}" ?`;
-                    break;
                 case 'disposable':
-                    error = "Les emails jetables (temporaires) ne sont pas acceptés";
+                    error = "Les emails jetables ne sont pas acceptés";
                     break;
                 case 'mx':
                     error = "Ce domaine email n'existe pas ou n'accepte pas les mails";
-                    break;
-                case 'smtp':
-                    error = "Cette adresse email n'existe pas chez le fournisseur";
                     break;
                 default:
                     error = "Email invalide ou inexistant";
@@ -86,9 +84,8 @@ const validateEmailDeep = async (email) => {
         return { valid: true };
     } catch (error) {
         console.error(`❌ Erreur validation email :`, error.message);
-        // En cas d'erreur de validation (timeout SMTP, etc.), on laisse passer
-        // pour ne pas bloquer les vrais utilisateurs
-        return { valid: true, warning: "Validation approfondie impossible" };
+        // En cas d'erreur, on laisse passer
+        return { valid: true, warning: "Validation impossible" };
     }
 };
 
@@ -98,3 +95,4 @@ module.exports = {
     validateEmailDeep,
     EMAIL_REGEX
 };
+

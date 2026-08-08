@@ -1,6 +1,7 @@
 const Reservation = require('../model/Reservations');
 const Chambre = require('../model/Chambre');
 const Hotel = require('../model/Hotel');
+const { createNotification } = require('../util/notificationService');
 const { successResponse, errorResponse } = require('../util/apiResponse');
 
 exports.createReservation = async (req, res, next) => {
@@ -50,6 +51,25 @@ exports.createReservation = async (req, res, next) => {
         if (chambre.quantiteDisponible <= 0) chambre.estDisponible = false;
         await chambre.save();
 
+        // ✅ NOTIFICATION à l'owner
+        try {
+            const hotelDetails = await Hotel.findById(chambre.hotel);
+            if (hotelDetails) {
+                await createNotification({
+                    utilisateurId: hotelDetails.proprietaire,
+                    type: 'nouvelle_reservation',
+                    titre: '🆕 Nouvelle réservation !',
+                    message: `${req.utilisateur.prenom} ${req.utilisateur.nom} a réservé "${chambre.nom}" pour ${nuits} nuit${nuits > 1 ? 's' : ''}`,
+                    icone: 'Calendar',
+                    couleur: 'blue',
+                    lien: `/owner/reservations/${reservation._id}`,
+                    data: { reservationId: reservation._id.toString() }
+                });
+            }
+        } catch (notifErr) {
+            console.error('⚠️ Erreur notif (non bloquant):', notifErr.message);
+        }
+
         successResponse(res, { reservation }, 'Reservation creee', 201);
     } catch (error) { next(error); }
 };
@@ -84,7 +104,6 @@ exports.updateStatut = async (req, res, next) => {
         const reservation = await Reservation.findById(req.params.id);
         if (!reservation) return errorResponse(res, 'Reservation non trouvee', 404);
         
-        // Vérifier que le propriétaire est celui de l'hôtel
         const hotel = await Hotel.findById(reservation.hotel);
         if (req.utilisateur.role !== 'admin' && 
             hotel.proprietaire.toString() !== req.utilisateur._id.toString()) {
@@ -94,7 +113,7 @@ exports.updateStatut = async (req, res, next) => {
         const nouveauStatut = req.body.statut;
         const oldStatus = reservation.statut;
 
-        // ✅ VÉRIFICATION : "terminée" seulement après la date de départ
+        // ✅ Vérifier "terminée" seulement après date de départ
         if (nouveauStatut === 'terminee') {
             const maintenant = new Date();
             const dateDepart = new Date(reservation.dateDepart);
@@ -111,7 +130,16 @@ exports.updateStatut = async (req, res, next) => {
             }
         }
 
-        // ✅ VÉRIFICATION : "terminée" nécessite d'être "confirmée" d'abord
+        // ✅ Vérification : "confirmée" nécessite d'être "payée" d'abord
+        if (nouveauStatut === 'confirmee' && oldStatus !== 'payee' && oldStatus !== 'en_attente') {
+            return errorResponse(
+                res, 
+                'La réservation doit être payée avant d\'être confirmée.', 
+                400
+            );
+        }
+
+        // ✅ Vérification : "terminée" nécessite d'être "confirmée" d'abord
         if (nouveauStatut === 'terminee' && oldStatus !== 'confirmee') {
             return errorResponse(
                 res, 
@@ -119,11 +147,11 @@ exports.updateStatut = async (req, res, next) => {
                 400
             );
         }
-
+        
         reservation.statut = nouveauStatut;
         await reservation.save();
         
-        // Si annulée → libérer la chambre
+        // Libérer la chambre si annulée
         if (nouveauStatut === 'annulee' && oldStatus !== 'annulee') {
             const chambre = await Chambre.findById(reservation.chambre);
             if (chambre) {
@@ -131,6 +159,43 @@ exports.updateStatut = async (req, res, next) => {
                 chambre.estDisponible = true;
                 await chambre.save();
             }
+        }
+
+        // ✅ NOTIFICATIONS au client
+        try {
+            if (nouveauStatut === 'confirmee' && oldStatus !== 'confirmee') {
+                await createNotification({
+                    utilisateurId: reservation.utilisateur,
+                    type: 'reservation_confirmee',
+                    titre: '✅ Réservation confirmée !',
+                    message: 'Votre réservation a été confirmée par l\'hôtelier. Bon séjour !',
+                    icone: 'CheckCircle',
+                    couleur: 'green',
+                    lien: `/client/reservations/${reservation._id}`
+                });
+            } else if (nouveauStatut === 'annulee' && oldStatus !== 'annulee') {
+                await createNotification({
+                    utilisateurId: reservation.utilisateur,
+                    type: 'reservation_annulee',
+                    titre: '❌ Réservation annulée',
+                    message: 'Votre réservation a été annulée.',
+                    icone: 'XCircle',
+                    couleur: 'red',
+                    lien: `/client/reservations/${reservation._id}`
+                });
+            } else if (nouveauStatut === 'terminee' && oldStatus !== 'terminee') {
+                await createNotification({
+                    utilisateurId: reservation.utilisateur,
+                    type: 'reservation_terminee',
+                    titre: '⭐ Séjour terminé',
+                    message: 'Merci pour votre séjour ! N\'oubliez pas de laisser un avis.',
+                    icone: 'Star',
+                    couleur: 'yellow',
+                    lien: `/client/reservations/${reservation._id}`
+                });
+            }
+        } catch (notifErr) {
+            console.error('⚠️ Erreur notif (non bloquant):', notifErr.message);
         }
         
         successResponse(res, { reservation }, `Statut mis à jour : ${nouveauStatut}`);

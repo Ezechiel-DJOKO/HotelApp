@@ -14,6 +14,7 @@ import {
   CheckCheck,
   Calendar,
   Users,
+  CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -47,7 +48,7 @@ const statutConfig: Record<
   ReservationStatut,
   {
     label: string;
-    variant: "warning" | "success" | "danger" | "default";
+    variant: "default" | "primary" | "success" | "warning" | "danger" | "purple";
     icon: React.ReactNode;
   }
 > = {
@@ -70,6 +71,11 @@ const statutConfig: Record<
     label: "Terminée",
     variant: "default",
     icon: <CheckCheck className="w-3 h-3" />,
+  },
+  payee: {
+    label: "Payée",
+    variant: "primary",
+    icon: <CreditCard className="w-3 h-3" />,
   },
 };
 

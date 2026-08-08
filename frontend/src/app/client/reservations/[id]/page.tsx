@@ -19,6 +19,7 @@ import {
   Phone,
   Mail,
   BedDouble,
+  CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -50,7 +51,7 @@ const statutConfig: Record<
   ReservationStatut,
   {
     label: string;
-    variant: "warning" | "success" | "danger" | "default";
+    variant: "default" | "primary" | "success" | "warning" | "danger" | "purple";
     icon: React.ReactNode;
     color: string;
     description: string;
@@ -83,6 +84,13 @@ const statutConfig: Record<
     icon: <CheckCheck className="w-4 h-4" />,
     color: "bg-slate-50 border-slate-200 text-slate-700",
     description: "Merci d'avoir séjourné chez nous ! N'hésitez pas à laisser un avis.",
+  },
+  payee: {
+    label: "Réservation payée",
+    variant: "primary",
+    icon: <CreditCard className="w-4 h-4" />,
+    color: "bg-blue-50 border-blue-200 text-blue-800",
+    description: "Votre paiement a été reçu. L'hôtelier va confirmer votre réservation sous peu.",
   },
 };
 

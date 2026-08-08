@@ -11,6 +11,8 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import GoogleTranslate from "@/components/shared/ui/GoogleTranslate";
+import ThemeToggle from "../ui/ThemeToggle";
 
 export default function PublicNavbar() {
   const { isAuthenticated, user } = useAuthStore();
@@ -117,8 +119,12 @@ export default function PublicNavbar() {
                 <LayoutDashboard className="w-4 h-4" />
                 Mon espace
               </Link>
+              
             ) : (
+              
               <>
+                <ThemeToggle />
+                <GoogleTranslate />
                 <Link
                   href="/auth/login"
                   onClick={() => setMobileOpen(false)}

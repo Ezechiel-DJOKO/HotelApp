@@ -14,6 +14,9 @@ import {
   Heart,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import NotificationBell from "@/components/shared/notifications/NotificationBell";
+import GoogleTranslate from "@/components/shared/ui/GoogleTranslate";
+import ThemeToggle from "@/components/shared/ui/ThemeToggle";
 
 interface ClientHeaderProps {
   onMenuClick: () => void;
@@ -68,11 +71,9 @@ export default function ClientHeader({ onMenuClick }: ClientHeaderProps) {
         >
           <Heart className="w-5 h-5 text-slate-700" />
         </Link>
-
-        <button className="relative p-2 rounded-lg hover:bg-slate-100 transition">
-          <Bell className="w-5 h-5 text-slate-700" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full" />
-        </button>
+        <ThemeToggle />
+        <GoogleTranslate />
+        <NotificationBell color="blue" />
 
         <div className="relative" ref={menuRef}>
           <button

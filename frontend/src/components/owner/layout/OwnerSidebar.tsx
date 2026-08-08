@@ -13,6 +13,10 @@ import {
   Key,
   X,
   Sparkles,
+  BarChart3,
+  Settings,
+  Bell,
+  HelpCircle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -75,27 +79,47 @@ export default function OwnerSidebar({
           icon: <ClipboardList className="w-5 h-5" />,
         },
         {
+          label: "Mes Revenus",
+          href: "/owner/revenus",
+          icon: <TrendingUp className="w-5 h-5" />,
+        },
+        {
           label: "Statistiques",
           href: "/owner/statistiques",
-          icon: <TrendingUp className="w-5 h-5" />,
+          icon: <BarChart3 className="w-5 h-5" />,
         },
       ],
     },
     {
-      title: "Mon compte",
-      items: [
-        {
-          label: "Profil",
-          href: "/owner/profil",
-          icon: <User className="w-5 h-5" />,
-        },
-        {
-          label: "Mot de passe",
-          href: "/owner/password",
-          icon: <Key className="w-5 h-5" />,
-        },
-      ],
+  title: "Mon compte",
+  items: [
+    {
+      label: "Profil",
+      href: "/owner/profil",
+      icon: <User className="w-5 h-5" />,
     },
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: <Bell className="w-5 h-5" />,
+    },
+    {
+      label: "Paramètres",
+      href: "/parametres",
+      icon: <Settings className="w-5 h-5" />,
+    },
+    {
+      label: "Aide",
+      href: "/aide",
+      icon: <HelpCircle className="w-5 h-5" />,
+    },
+    {
+      label: "Mot de passe",
+      href: "/owner/password",
+      icon: <Key className="w-5 h-5" />,
+    },
+  ],
+},
   ];
 
   const SidebarContent = () => (

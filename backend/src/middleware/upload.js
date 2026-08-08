@@ -2,19 +2,16 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Créer le dossier uploads s'il n'existe pas
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configuration du stockage local
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Nom unique : timestamp-random-nomOriginal
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         const ext = path.extname(file.originalname);
         cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
@@ -23,12 +20,26 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
+        // Accepter images, PDF et ZIP
+        const allowedMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/svg+xml',
+            'application/pdf',
+            'application/zip',
+            'application/x-zip-compressed',
+            'application/x-rar-compressed',
+            'application/octet-stream',
+        ];
+
+        if (allowedMimes.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
-            cb(new Error('Seules les images sont autorisées'), false);
+            cb(new Error(`Type de fichier non autorisé : ${file.mimetype}. Acceptés : images, PDF, ZIP`), false);
         }
     },
 });

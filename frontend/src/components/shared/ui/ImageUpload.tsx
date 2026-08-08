@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import { Upload, X, ImagePlus } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -66,17 +65,23 @@ export default function ImageUpload({
       </label>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {/* Images existantes */}
         {existingUrls.map((url) => (
           <div
             key={url}
-            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group"
+            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group bg-slate-100"
           >
-            <Image src={url} alt="" fill className="object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt="Image existante"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
             {onRemoveExisting && (
               <button
                 type="button"
                 onClick={() => onRemoveExisting(url)}
-                className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition z-10"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -84,27 +89,34 @@ export default function ImageUpload({
           </div>
         ))}
 
+        {/* Nouvelles images (previews) */}
         {previews.map((src, i) => (
           <div
             key={src}
-            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group"
+            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group bg-slate-100"
           >
-            <Image src={src} alt="" fill className="object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={`Nouvelle image ${i + 1}`}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
             <button
               type="button"
               onClick={() => removeNew(i)}
-              className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+              className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition z-10"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         ))}
 
+        {/* Bouton ajouter */}
         {existingUrls.length + files.length < maxFiles && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-blue-500 hover:text-blue-600 transition"
+            className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-blue-500 hover:text-blue-600 transition bg-slate-50"
           >
             <ImagePlus className="w-8 h-8" />
             <span className="text-xs font-medium">Ajouter</span>

@@ -13,10 +13,12 @@ import {
   Eye,
   PlusCircle,
   AlertCircle,
+  DollarSign,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ownerService } from "@/services/owner.service";
-import { Hotel as HotelType } from "@/types";
+import { paymentService } from "@/services/payment.service";
+import { Hotel as HotelType, Transaction } from "@/types";
 
 import PageHeader from "@/components/shared/ui/PageHeader";
 import StatCard from "@/components/shared/ui/StatCard";
@@ -24,10 +26,13 @@ import Card from "@/components/shared/ui/Card";
 import Button from "@/components/shared/ui/Button";
 import Loader from "@/components/shared/ui/Loader";
 import EmptyState from "@/components/shared/ui/EmptyState";
+import LineChart from "@/components/shared/charts/LineChart";
+import DoughnutChart from "@/components/shared/charts/DoughnutChart";
 
 export default function OwnerDashboardPage() {
   const [hotel, setHotel] = useState<HotelType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState({
     totalChambres: 0,
     reservationsEnAttente: 0,
@@ -44,15 +49,18 @@ export default function OwnerDashboardPage() {
         const monHotel = hotels[0];
         setHotel(monHotel);
 
-        // Charger les chambres et réservations
         try {
-          const [chambresRes, reservationsRes] = await Promise.all([
+          const [chambresRes, reservationsRes, revenusRes] = await Promise.all([
             ownerService.getChambres(monHotel._id),
             ownerService.getReservationsHotel(monHotel._id),
+            paymentService.getMesRevenus(),
           ]);
 
           const chambres = chambresRes.data?.chambres || [];
           const reservations = reservationsRes.data?.reservations || [];
+          const trans = revenusRes.data?.transactions || [];
+
+          setTransactions(trans);
 
           setStats({
             totalChambres: chambres.length,
@@ -100,6 +108,50 @@ export default function OwnerDashboardPage() {
     );
   }
 
+  // ============================================
+  // DONNÉES POUR LES GRAPHIQUES
+  // ============================================
+
+  // Revenus par mois (6 derniers mois)
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (5 - i));
+    return date;
+  });
+
+  const revenusParMois = last6Months.map((date) => {
+    return transactions
+      .filter((t) => {
+        const tDate = new Date(t.createdAt);
+        return (
+          tDate.getFullYear() === date.getFullYear() &&
+          tDate.getMonth() === date.getMonth()
+        );
+      })
+      .reduce((sum, t) => sum + (t.montantHotel || 0), 0);
+  });
+
+  const moisLabels = last6Months.map((d) =>
+    d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })
+  );
+
+  // Méthodes de paiement
+  const methodesLabels: Record<string, string> = {
+    mtn_momo: "MTN MoMo",
+    moov_money: "Moov Money",
+    orange_money: "Orange Money",
+    wave: "Wave",
+    carte_visa: "Visa",
+    carte_mastercard: "Mastercard",
+    demo: "Démo",
+  };
+
+  const parMethode: Record<string, number> = {};
+  transactions.forEach((t) => {
+    const label = methodesLabels[t.methode] || t.methode;
+    parMethode[label] = (parMethode[label] || 0) + 1;
+  });
+
   return (
     <div className="space-y-6 lg:space-y-8">
       <PageHeader
@@ -117,7 +169,7 @@ export default function OwnerDashboardPage() {
         }
       />
 
-      {/* Bannière hôtel */}
+      {/* BANNIÈRE HÔTEL */}
       <Card className="bg-gradient-to-br from-purple-500 to-pink-500 border-0 text-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
@@ -137,7 +189,7 @@ export default function OwnerDashboardPage() {
         </div>
       </Card>
 
-      {/* Stats */}
+      {/* STATS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Chambres"
@@ -165,7 +217,71 @@ export default function OwnerDashboardPage() {
         />
       </div>
 
-      {/* Actions rapides */}
+      {/* GRAPHIQUES */}
+      {transactions.length > 0 && (
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">
+            📊 Mes statistiques
+          </h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Évolution des revenus */}
+            <Card>
+              <div className="mb-4">
+                <h3 className="font-bold text-slate-900 mb-1">
+                  📈 Évolution de mes revenus
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Vos gains nets sur les 6 derniers mois
+                </p>
+              </div>
+              <LineChart
+                labels={moisLabels}
+                datasets={[
+                  {
+                    label: "Revenus nets (XOF)",
+                    data: revenusParMois,
+                    color: "#a855f7",
+                  },
+                ]}
+                height={280}
+              />
+            </Card>
+
+            {/* Méthodes de paiement */}
+            <Card>
+              <div className="mb-4">
+                <h3 className="font-bold text-slate-900 mb-1">
+                  💳 Méthodes de paiement
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Comment vos clients paient
+                </p>
+              </div>
+              {Object.keys(parMethode).length > 0 ? (
+                <DoughnutChart
+                  labels={Object.keys(parMethode)}
+                  data={Object.values(parMethode)}
+                  colors={[
+                    "#a855f7",
+                    "#ec4899",
+                    "#3b82f6",
+                    "#06b6d4",
+                    "#10b981",
+                  ]}
+                  height={280}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64 text-slate-400">
+                  <p className="text-sm">Pas encore de données</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* ACTIONS RAPIDES */}
       <div>
         <h2 className="text-lg font-bold text-slate-900 mb-4">
           Actions rapides
@@ -207,6 +323,22 @@ export default function OwnerDashboardPage() {
             </Card>
           </Link>
 
+          <Link href="/owner/revenus">
+            <Card hover className="cursor-pointer h-full">
+              <div className="flex items-start gap-3">
+                <div className="p-3 bg-green-100 rounded-lg text-green-600">
+                  <DollarSign className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 mb-1">
+                    Mes Revenus
+                  </h3>
+                  <p className="text-xs text-slate-600">Voir mes gains</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
           <Link href="/owner/hotel">
             <Card hover className="cursor-pointer h-full">
               <div className="flex items-start gap-3">
@@ -224,28 +356,10 @@ export default function OwnerDashboardPage() {
               </div>
             </Card>
           </Link>
-
-          <Link href="/owner/statistiques">
-            <Card hover className="cursor-pointer h-full">
-              <div className="flex items-start gap-3">
-                <div className="p-3 bg-green-100 rounded-lg text-green-600">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">
-                    Statistiques
-                  </h3>
-                  <p className="text-xs text-slate-600">
-                    Analyses détaillées
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </Link>
         </div>
       </div>
 
-      {/* Alerte si pas de chambres */}
+      {/* ALERTE si pas de chambres */}
       {stats.totalChambres === 0 && (
         <Card className="border-l-4 border-l-orange-500">
           <div className="flex items-start gap-4">

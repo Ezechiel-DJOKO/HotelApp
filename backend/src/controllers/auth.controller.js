@@ -7,6 +7,7 @@ const generateToken = (id) => {
         expiresIn: process.env.JWT_EXPIRE || '7d'
     });
 };
+const { notifyAdmins } = require('../util/notificationService');
 
 exports.inscription = async (req,res,next) => {
     try {
@@ -102,7 +103,32 @@ exports.verificationOTP = async (req,res,next) => {
 
         if (utilisateur.verifyOTP(otpCode)){
             await utilisateur.save({validateBeforeSave: false});
+
+            // ✅ NOTIFICATION aux admins
+            const { notifyAdmins } = require('../util/notificationService');
+            await notifyAdmins({
+                type: 'nouveau_client',
+                titre: '👤 Nouveau client inscrit',
+                message: `${utilisateur.prenom} ${utilisateur.nom} vient de s'inscrire`,
+                icone: 'UserPlus',
+                couleur: 'blue',
+                lien: `/admin/clients/${utilisateur._id}`
+            });
+
             const token = generateToken(utilisateur._id);
+            // ✅ NOTIFICATION aux admins
+            try {
+                await notifyAdmins({
+                    type: 'nouveau_client',
+                    titre: '👤 Nouveau client inscrit',
+                    message: `${utilisateur.prenom} ${utilisateur.nom} vient de s'inscrire`,
+                    icone: 'UserPlus',
+                    couleur: 'blue',
+                    lien: `/admin/clients/${utilisateur._id}`
+                });
+            } catch (notifErr) {
+                console.error('⚠️ Erreur notif (non bloquant):', notifErr.message);
+            }
             successResponse(res,{
                 utilisateur: {
                     _id: utilisateur._id,

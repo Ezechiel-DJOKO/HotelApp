@@ -14,6 +14,7 @@ import {
   Users,
   Eye,
   Compass,
+  CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -31,7 +32,7 @@ const statutConfig: Record<
   ReservationStatut,
   {
     label: string;
-    variant: "warning" | "success" | "danger" | "default";
+    variant: "default" | "primary" | "success" | "warning" | "danger" | "purple";
     icon: React.ReactNode;
   }
 > = {
@@ -39,6 +40,11 @@ const statutConfig: Record<
     label: "En attente",
     variant: "warning",
     icon: <Clock className="w-3 h-3" />,
+  },
+  payee: {
+    label: "Payée",
+    variant: "primary",
+    icon: <CreditCard className="w-3 h-3" />,
   },
   confirmee: {
     label: "Confirmée",
@@ -105,14 +111,16 @@ export default function ClientDashboardPage() {
   const stats = {
     total: reservations.length,
     en_attente: reservations.filter((r) => r.statut === "en_attente").length,
+    payee: reservations.filter((r) => r.statut === "payee").length,
     confirmee: reservations.filter((r) => r.statut === "confirmee").length,
     terminee: reservations.filter((r) => r.statut === "terminee").length,
     annulee: reservations.filter((r) => r.statut === "annulee").length,
   };
 
-  const filters: { key: FilterType; label: string; count: number }[] = [
+  const filters = [
     { key: "all", label: "Toutes", count: stats.total },
     { key: "en_attente", label: "En attente", count: stats.en_attente },
+    { key: "payee", label: "Payées", count: stats.payee },
     { key: "confirmee", label: "Confirmées", count: stats.confirmee },
     { key: "terminee", label: "Terminées", count: stats.terminee },
     { key: "annulee", label: "Annulées", count: stats.annulee },
@@ -192,7 +200,7 @@ export default function ClientDashboardPage() {
         {filters.map((f) => (
           <button
             key={f.key}
-            onClick={() => setFilter(f.key)}
+            onClick={() => setFilter(f.key as FilterType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${
               filter === f.key
                 ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm"

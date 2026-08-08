@@ -5,6 +5,7 @@ const Reservation = require('../model/Reservations');
 const sendEmail = require('../util/sendEmail');
 const { successResponse, errorResponse } = require('../util/apiResponse');
 const slugify = require('slugify');
+const { createNotification } = require('../util/notificationService');
 
 // ============================================
 // GÉNÉRATION MOT DE PASSE ALÉATOIRE
@@ -198,6 +199,22 @@ exports.createHotelWithOwner = async (req, res, next) => {
 
         // ✅ RÉPONDRE IMMÉDIATEMENT (sans attendre l'email)
         console.log("✅ === RÉPONSE ENVOYÉE ===");
+
+        // ✅ NOTIFICATION à l'owner (bienvenue)
+        // ✅ NOTIFICATION à l'owner (bienvenue)
+        try {
+            await createNotification({
+                utilisateurId: owner._id,
+                type: 'nouvel_hotel',
+                titre: '🎉 Bienvenue sur HotelBenin !',
+                message: `Votre hôtel "${nom}" a été créé. Commencez par ajouter vos chambres.`,
+                icone: 'Hotel',
+                couleur: 'purple',
+                lien: '/owner/hotel/chambres/create'
+            });
+        } catch (notifErr) {
+            console.error('⚠️ Erreur notif (non bloquant):', notifErr.message);
+        }
         return successResponse(res, {
             hotel,
             owner: {
@@ -240,7 +257,8 @@ exports.getAllOwners = async (req, res, next) => {
 
 exports.getAllClients = async (req, res, next) => {
     try {
-        const clients = await Utilisateur.find({ role: 'user' }).sort({ createdAt: -1 });
+        const clients = await Utilisateur.find({ role: 'user' })
+            .sort({ createdAt: -1 });
         successResponse(res, { clients }, 'Clients récupérés');
     } catch (error) {
         next(error);
@@ -321,6 +339,182 @@ exports.deleteUser = async (req, res, next) => {
         await user.deleteOne();
         successResponse(res, {}, 'Utilisateur supprimé');
     } catch (error) {
+        next(error);
+    }
+};
+
+// ============================================
+// SUPPRIMER UN HÔTEL (avec cascade)
+// ============================================
+// ============================================
+// SUPPRIMER UN HÔTEL (avec cascade + supprimer owner)
+// ============================================
+exports.deleteHotel = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { raison, supprimerOwner = true } = req.body || {};
+
+        console.log(`🗑️  Suppression hôtel ${id}`);
+
+        const hotel = await Hotel.findById(id).populate('proprietaire');
+        if (!hotel) {
+            return errorResponse(res, 'Hôtel introuvable', 404);
+        }
+
+        const ownerId = hotel.proprietaire?._id;
+        const ownerEmail = hotel.proprietaire?.email;
+        const ownerNom = hotel.proprietaire ? `${hotel.proprietaire.prenom} ${hotel.proprietaire.nom}` : "";
+
+        // Vérifier si l'owner a d'autres hôtels
+        let hasOtherHotels = false;
+        if (ownerId) {
+            const otherHotels = await Hotel.countDocuments({ 
+                proprietaire: ownerId, 
+                _id: { $ne: id } 
+            });
+            hasOtherHotels = otherHotels > 0;
+        }
+
+        // Compter les données liées
+        const [nbChambres, nbReservations, nbAvis] = await Promise.all([
+            Chambre.countDocuments({ hotel: id }),
+            Reservation.countDocuments({ hotel: id }),
+            require('../model/Avis').countDocuments({ hotel: id })
+        ]);
+
+        console.log(`📊 À supprimer : ${nbChambres} chambres, ${nbReservations} réservations, ${nbAvis} avis`);
+
+        // Récupérer les réservations actives pour notifier les clients
+        const reservationsActives = await Reservation.find({
+            hotel: id,
+            statut: { $in: ['en_attente', 'confirmee'] }
+        }).populate('utilisateur', 'nom prenom email');
+
+        // Suppression en cascade
+        await Chambre.deleteMany({ hotel: id });
+        console.log(`✅ ${nbChambres} chambres supprimées`);
+
+        await Reservation.updateMany(
+            { hotel: id, statut: { $in: ['en_attente', 'confirmee'] } },
+            { statut: 'annulee' }
+        );
+        console.log(`✅ Réservations actives annulées`);
+
+        await require('../model/Avis').deleteMany({ hotel: id });
+        console.log(`✅ ${nbAvis} avis supprimés`);
+
+        await Hotel.findByIdAndDelete(id);
+        console.log(`✅ Hôtel ${hotel.nom} supprimé`);
+
+        // ============================================
+        // SUPPRIMER LE PROPRIÉTAIRE (si demandé et pas d'autres hôtels)
+        // ============================================
+        let ownerSupprimeStatus = 'non_supprime';
+        
+        if (supprimerOwner && ownerId && !hasOtherHotels) {
+            // Envoyer email AVANT suppression
+            try {
+                await sendEmail({
+                    to: ownerEmail,
+                    subject: '⚠️ Suppression de votre compte HotelBenin',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <div style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); padding: 30px; border-radius: 12px 12px 0 0; color: white; text-align: center;">
+                                <h1 style="margin: 0;">Compte fermé</h1>
+                            </div>
+                            <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px;">
+                                <p>Bonjour <strong>${ownerNom}</strong>,</p>
+                                <p>Nous vous informons que votre hôtel <strong>"${hotel.nom}"</strong> ainsi que votre compte propriétaire ont été supprimés de la plateforme HotelBenin.</p>
+                                
+                                ${raison ? `
+                                <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 8px;">
+                                    <p style="margin: 0; color: #991b1b;"><strong>Raison :</strong></p>
+                                    <p style="margin: 5px 0 0 0; color: #7f1d1d;">${raison}</p>
+                                </div>
+                                ` : ''}
+
+                                <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                    <p style="margin: 0; color: #1e40af; font-weight: bold;">📊 Résumé :</p>
+                                    <ul style="margin: 10px 0; color: #1e3a8a;">
+                                        <li>${nbChambres} chambre(s) supprimée(s)</li>
+                                        <li>${nbReservations} réservation(s) traitée(s)</li>
+                                        <li>${nbAvis} avis supprimé(s)</li>
+                                        <li>Votre compte propriétaire</li>
+                                    </ul>
+                                </div>
+
+                                <p>Vous pouvez toujours créer un <strong>nouveau compte client</strong> si vous souhaitez utiliser HotelBenin en tant que voyageur.</p>
+
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="mailto:contact@hotelbenin.bj" style="display: inline-block; background: #dc2626; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                                        Contacter le support
+                                    </a>
+                                </div>
+
+                                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                                <p style="color: #6b7280; font-size: 12px; text-align: center;">
+                                    © ${new Date().getFullYear()} HotelBenin
+                                </p>
+                            </div>
+                        </div>
+                    `
+                }).catch(e => console.error('Erreur email:', e.message));
+            } catch (e) {
+                console.error('Erreur préparation email:', e.message);
+            }
+
+            // Supprimer le compte
+            await Utilisateur.findByIdAndDelete(ownerId);
+            console.log(`✅ Compte propriétaire ${ownerNom} supprimé`);
+            ownerSupprimeStatus = 'supprime';
+        } else if (hasOtherHotels) {
+            // Le propriétaire a d'autres hôtels, on ne supprime pas mais on notifie
+            try {
+                await createNotification({
+                    utilisateurId: ownerId,
+                    type: 'systeme',
+                    titre: '⚠️ Votre hôtel a été supprimé',
+                    message: `L'administrateur a supprimé "${hotel.nom}". Vos autres hôtels restent actifs.`,
+                    icone: 'AlertCircle',
+                    couleur: 'red',
+                });
+            } catch (e) {
+                console.error('⚠️ Erreur notif owner:', e.message);
+            }
+            ownerSupprimeStatus = 'conserve_autres_hotels';
+        }
+
+        // Notifier les clients avec réservations actives
+        for (const resa of reservationsActives) {
+            if (resa.utilisateur) {
+                try {
+                    await createNotification({
+                        utilisateurId: resa.utilisateur._id,
+                        type: 'reservation_annulee',
+                        titre: '❌ Votre réservation a été annulée',
+                        message: `L'hôtel "${hotel.nom}" a été supprimé. Votre réservation a été annulée.`,
+                        icone: 'AlertCircle',
+                        couleur: 'red',
+                        lien: '/client'
+                    });
+                } catch (e) {
+                    console.error('⚠️ Erreur notif client:', e.message);
+                }
+            }
+        }
+
+        successResponse(res, {
+            hotelSupprime: hotel.nom,
+            ownerSupprime: ownerSupprimeStatus,
+            statistiques: {
+                chambres: nbChambres,
+                reservations: nbReservations,
+                avis: nbAvis,
+                reservationsActives: reservationsActives.length
+            }
+        }, 'Hôtel supprimé avec succès', 200);
+    } catch (error) {
+        console.error('❌ Erreur deleteHotel:', error);
         next(error);
     }
 };

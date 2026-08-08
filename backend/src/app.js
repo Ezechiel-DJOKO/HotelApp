@@ -18,9 +18,20 @@ const chambreRoutes = require('./routes/Chambre.route');
 const reservationRoutes = require('./routes/Reservation.route');
 const avisRoutes = require('./routes/Avis.route');
 const adminRoutes = require('./routes/Admin.route');
+const notificationRoutes = require('./routes/Notification.route');
+const paymentRoutes = require('./routes/Payment.route');
+const reversementRoutes = require('./routes/Reversement.route');
+const demandeProprietaireRoutes = require('./routes/DemandeProprietaire.route');
+const opportuniteRoutes = require('./routes/Opportunite.route');
 
+// ============================================
+// CRÉER L'APP EXPRESS
+// ============================================
 const app = express();
 
+// ============================================
+// SERVIR LES IMAGES UPLOADÉES
+// ============================================
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ============================================
@@ -35,7 +46,6 @@ app.use(cors({
 // ============================================
 // RATE LIMITING
 // ============================================
-// Rate limiter : STRICT en production, DÉSACTIVÉ en dev
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: process.env.NODE_ENV === 'production' ? 100 : 10000,
@@ -76,7 +86,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // ============================================
-// ROUTES
+// ROUTES (⭐ TOUTES ICI, AVANT le 404)
 // ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -85,6 +95,11 @@ app.use('/api/hotels/:hotelId/chambres', chambreRoutes);
 app.use('/api/hotels/:hotelId/avis', avisRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);  // ⭐ ICI, PAS APRÈS LE 404
+app.use('/api/reversements', reversementRoutes);
+app.use('/api/demandes-proprietaire', demandeProprietaireRoutes);
+app.use('/api/opportunites', opportuniteRoutes);
 
 // ============================================
 // HEALTH CHECK
@@ -99,14 +114,14 @@ app.get('/', (req, res) => {
 });
 
 // ============================================
-// 404
+// 404 (⚠️ TOUJOURS EN AVANT-DERNIER)
 // ============================================
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Route non trouvee' });
 });
 
 // ============================================
-// ERROR HANDLER
+// ERROR HANDLER (⚠️ TOUJOURS EN DERNIER)
 // ============================================
 app.use(errorHandler);
 

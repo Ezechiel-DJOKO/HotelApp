@@ -14,12 +14,30 @@ interface StatCardProps {
 }
 
 const colorStyles = {
-  blue: "bg-blue-50 text-blue-600",
-  green: "bg-green-50 text-green-600",
-  yellow: "bg-yellow-50 text-yellow-600",
-  red: "bg-red-50 text-red-600",
-  purple: "bg-purple-50 text-purple-600",
-  gray: "bg-gray-50 text-gray-600",
+  blue: {
+    iconBg: "bg-blue-50 dark:bg-blue-500/20",
+    iconText: "text-blue-600",
+  },
+  green: {
+    iconBg: "bg-green-50 dark:bg-green-500/20",
+    iconText: "text-green-600",
+  },
+  yellow: {
+    iconBg: "bg-yellow-50 dark:bg-yellow-500/20",
+    iconText: "text-yellow-600",
+  },
+  red: {
+    iconBg: "bg-red-50 dark:bg-red-500/20",
+    iconText: "text-red-600",
+  },
+  purple: {
+    iconBg: "bg-purple-50 dark:bg-purple-500/20",
+    iconText: "text-purple-600",
+  },
+  gray: {
+    iconBg: "bg-gray-50 dark:bg-gray-500/20",
+    iconText: "text-gray-600",
+  },
 };
 
 export default function StatCard({
@@ -29,27 +47,37 @@ export default function StatCard({
   color = "blue",
   trend,
 }: StatCardProps) {
+  const styles = colorStyles[color];
+
   return (
     <Card hover>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
-          <p className="text-2xl lg:text-3xl font-bold text-gray-900">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+            {label}
+          </p>
+          <p className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
             {value}
           </p>
           {trend && (
             <p
               className={`text-xs mt-2 font-medium ${
-                trend.isPositive ? "text-green-600" : "text-red-600"
+                trend.isPositive
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
               }`}
             >
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%{" "}
-              <span className="text-gray-500 font-normal">{trend.label}</span>
+              <span className="text-slate-500 dark:text-slate-400 font-normal">
+                {trend.label}
+              </span>
             </p>
           )}
         </div>
         {icon && (
-          <div className={`p-3 rounded-lg ${colorStyles[color]}`}>{icon}</div>
+          <div className={`p-3 rounded-lg ${styles.iconBg} ${styles.iconText}`}>
+            {icon}
+          </div>
         )}
       </div>
     </Card>

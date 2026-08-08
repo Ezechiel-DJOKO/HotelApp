@@ -12,6 +12,12 @@ import {
   X,
   Hotel,
   Compass,
+  Bell,
+  HelpCircle,
+  Settings,
+  FileText,
+  Briefcase,
+  TrendingUp,
 } from "lucide-react";
 
 interface MenuItem {
@@ -63,23 +69,58 @@ export default function ClientSidebar({
           href: "/client/favoris",
           icon: <Heart className="w-5 h-5" />,
         },
+        {
+          label: "Mes Demandes",
+          href: "/client/mes-demandes",
+          icon: <FileText className="w-5 h-5" />,
+        },
       ],
     },
     {
-      title: "Mon compte",
-      items: [
-        {
-          label: "Profil",
-          href: "/client/profil",
-          icon: <User className="w-5 h-5" />,
-        },
-        {
-          label: "Mot de passe",
-          href: "/client/password",
-          icon: <Key className="w-5 h-5" />,
-        },
-      ],
+    title: "Investir",
+    items: [
+      {
+        label: "Opportunités",
+        href: "/client/investir",
+        icon: <TrendingUp className="w-5 h-5" />,
+      },
+      {
+        label: "Mes Projets",
+        href: "/client/mes-opportunites",
+        icon: <Briefcase className="w-5 h-5" />,
+      },
+    ],
+  },
+    {
+  title: "Mon compte",
+  items: [
+    {
+      label: "Profil",
+      href: "/client/profil",
+      icon: <User className="w-5 h-5" />,
     },
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: <Bell className="w-5 h-5" />,
+    },
+    {
+      label: "Paramètres",
+      href: "/parametres",
+      icon: <Settings className="w-5 h-5" />,
+    },
+    {
+      label: "Aide",
+      href: "/aide",
+      icon: <HelpCircle className="w-5 h-5" />,
+    },
+    {
+      label: "Mot de passe",
+      href: "/client/password",
+      icon: <Key className="w-5 h-5" />,
+    },
+  ],
+},
   ];
 
   const SidebarContent = () => (

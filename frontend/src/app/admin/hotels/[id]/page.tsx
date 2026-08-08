@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { adminService } from "@/services/admin.service";
-import { Hotel } from "@/types";
+import { chambreService } from "@/services/chambre.service";
+import { Hotel, Chambre } from "@/types";
 import {
   MapPin,
   Star,
@@ -19,6 +20,7 @@ import {
   User,
   CheckCircle,
   XCircle,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -28,6 +30,7 @@ import Button from "@/components/shared/ui/Button";
 import Badge from "@/components/shared/ui/Badge";
 import Loader from "@/components/shared/ui/Loader";
 import ImageLightbox from "@/components/shared/ui/ImageLightbox";
+import DeleteHotelModal from "@/components/admin/hotels/DeleteHotelModal";
 
 interface HotelWithOwner extends Hotel {
   proprietaire?: {
@@ -43,9 +46,11 @@ export default function AdminHotelDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [hotel, setHotel] = useState<HotelWithOwner | null>(null);
+  const [chambres, setChambres] = useState<Chambre[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -59,6 +64,14 @@ export default function AdminHotelDetailPage() {
         return;
       }
       setHotel(found);
+
+      // Charger les chambres pour les stats
+      try {
+        const chambresRes = await chambreService.getChambres(found._id);
+        setChambres(chambresRes.data?.chambres || []);
+      } catch (e) {
+        console.error("Erreur chambres:", e);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur");
     } finally {
@@ -135,6 +148,14 @@ export default function AdminHotelDetailPage() {
             <Link href={`/admin/hotels/${hotel._id}/edit`}>
               <Button icon={<Edit className="w-4 h-4" />}>Modifier</Button>
             </Link>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(true)}
+              icon={<Trash2 className="w-4 h-4" />}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Supprimer
+            </Button>
           </div>
         }
       />
@@ -161,110 +182,41 @@ export default function AdminHotelDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne principale */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Images */}
+          {/* Galerie */}
           {hotel.images && hotel.images.length > 0 ? (
-  <div>
-    {hotel.images.length === 1 ? (
-      // ============ 1 SEULE IMAGE ============
-      <button
-        onClick={() => {
-          setLightboxIndex(0);
-          setLightboxOpen(true);
-        }}
-        className="w-full group"
-      >
-        <Card
-          padding="none"
-          className="overflow-hidden aspect-video bg-slate-100 relative cursor-pointer hover:shadow-xl transition"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={hotel.images[0]}
-            alt={hotel.nom}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        </Card>
-      </button>
-    ) : (
-      // ============ PLUSIEURS IMAGES : MOSAÏQUE ============
-      <div className="grid grid-cols-4 gap-2 h-80 sm:h-96">
-        {/* Grande image à gauche */}
-        <button
-          onClick={() => {
-            setLightboxIndex(0);
-            setLightboxOpen(true);
-          }}
-          className="col-span-4 sm:col-span-2 row-span-2 group"
-        >
-          <Card
-            padding="none"
-            className="overflow-hidden h-full bg-slate-100 relative cursor-pointer hover:shadow-xl transition"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={hotel.images[0]}
-              alt={hotel.nom}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          </Card>
-        </button>
-
-        {/* 4 miniatures à droite (visibles sur sm+) */}
-        {hotel.images.slice(1, 5).map((img, i) => {
-          const isLast = i === 3 && hotel.images.length > 5;
-          return (
-            <button
-              key={i}
-              onClick={() => {
-                setLightboxIndex(i + 1);
-                setLightboxOpen(true);
-              }}
-              className="hidden sm:block col-span-1 row-span-1 group"
-            >
-              <Card
-                padding="none"
-                className="overflow-hidden h-full bg-slate-100 relative cursor-pointer hover:shadow-xl transition"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img}
-                  alt={`${hotel.nom} - photo ${i + 2}`}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                {/* Overlay "+ X photos" sur la dernière miniature */}
-                {isLast && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
-                    <span className="text-2xl font-bold">
-                      +{hotel.images.length - 5}
-                    </span>
-                    <span className="text-xs font-medium">photos</span>
-                  </div>
-                )}
-              </Card>
-            </button>
-          );
-        })}
-      </div>
-    )}
-
-    {/* Bouton "Voir toutes les photos" (mobile + desktop) */}
-    <button
-      onClick={() => {
-        setLightboxIndex(0);
-        setLightboxOpen(true);
-      }}
-      className="mt-3 w-full sm:w-auto px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg text-sm font-medium text-slate-700 transition inline-flex items-center gap-2 justify-center"
-    >
-      🖼️ Voir toutes les photos ({hotel.images.length})
-    </button>
-  </div>
-) : (
-  <Card padding="lg" className="text-center">
-    <HotelIcon className="w-16 h-16 text-slate-300 mx-auto mb-2" />
-    <p className="text-slate-500">Aucune image</p>
-  </Card>
-)}
-          
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {hotel.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setLightboxIndex(i);
+                    setLightboxOpen(true);
+                  }}
+                  className="group"
+                >
+                  <Card
+                    padding="none"
+                    className="overflow-hidden aspect-[4/3] bg-slate-100 relative cursor-pointer hover:shadow-lg transition"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img}
+                      alt={`${hotel.nom} - photo ${i + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+                      {i + 1} / {hotel.images.length}
+                    </div>
+                  </Card>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Card padding="lg" className="text-center">
+              <HotelIcon className="w-16 h-16 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-500">Aucune image</p>
+            </Card>
+          )}
 
           {/* Description */}
           <Card>
@@ -369,29 +321,54 @@ export default function AdminHotelDetailPage() {
             <h3 className="font-bold text-slate-900 mb-4">Statistiques</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Chambres</span>
+                <span className="font-semibold">{chambres.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Note moyenne</span>
                 <span className="font-semibold">
                   ⭐ {hotel.note?.toFixed(1) || "N/A"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Nombre d&apos;avis</span>
+                <span className="text-sm text-slate-600">
+                  Nombre d&apos;avis
+                </span>
                 <span className="font-semibold">{hotel.nombreAvis || 0}</span>
               </div>
             </div>
           </Card>
         </div>
       </div>
-      {/* Lightbox pour voir les images en grand */}
-{hotel.images && hotel.images.length > 0 && (
-  <ImageLightbox
-    images={hotel.images}
-    initialIndex={lightboxIndex}
-    isOpen={lightboxOpen}
-    onClose={() => setLightboxOpen(false)}
-    alt={hotel.nom}
-  />
-)}
+
+      {/* Lightbox */}
+      {hotel.images && hotel.images.length > 0 && (
+        <ImageLightbox
+          images={hotel.images}
+          initialIndex={lightboxIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          alt={hotel.nom}
+        />
+      )}
+
+      {/* Modal de suppression */}
+      <DeleteHotelModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        hotel={{
+          _id: hotel._id,
+          nom: hotel.nom,
+          ville: hotel.ville,
+          etoiles: hotel.etoiles,
+          proprietaire: hotel.proprietaire,
+        }}
+        stats={{
+          chambres: chambres.length,
+          reservations: 0,
+          avis: hotel.nombreAvis || 0,
+        }}
+      />
     </div>
   );
 }

@@ -26,13 +26,24 @@ exports.updateProfil = async (req, res, next) => {
 exports.uploadAvatar = async (req, res, next) => {
     try {
         if (!req.file) return errorResponse(res, 'Aucune image fournie', 400);
+        
+        // ✅ Construire l'URL complète (comme pour les hôtels)
+        const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+        const avatarUrl = `${baseUrl}/uploads/${req.file.filename}`;
+        
+        console.log('📸 Upload avatar:', avatarUrl);
+        
         const utilisateur = await Utilisateur.findByIdAndUpdate(
             req.utilisateur._id,
-            { avatar: req.file.path },
+            { avatar: avatarUrl },
             { new: true }
         );
+        
         successResponse(res, { utilisateur }, 'Avatar mis a jour');
-    } catch (error) { next(error); }
+    } catch (error) {
+        console.error('❌ Erreur upload avatar:', error);
+        next(error);
+    }
 };
 
 exports.devenirProprietaire = async (req, res, next) => {
