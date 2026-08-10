@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Logo from "@/components/shared/ui/Logo";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -61,14 +62,9 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <Hotel className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">
-            Hotel<span className="text-blue-600">Benin</span>
-          </span>
-        </Link>
+        <div className="flex justify-center mb-6">
+  <Logo size="lg" linkTo="/" />
+</div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
           {/* Retour login */}

@@ -21,6 +21,7 @@ import HotelCard from "@/components/shared/public/HotelCard";
 import Loader from "@/components/shared/ui/Loader";
 import Button from "@/components/shared/ui/Button";
 import BeninFlag from "@/components/shared/ui/BeninFlag";
+import Logo from "@/components/shared/ui/Logo";
 
 export default function HomePage() {
   const router = useRouter();
@@ -59,57 +60,81 @@ export default function HomePage() {
 
       <main>
         {/* HERO */}
-        <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 text-white py-20 sm:py-28 lg:py-32 px-4 overflow-hidden">
-          {/* Décorations */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-            <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-300 rounded-full blur-3xl"></div>
-          </div>
+<section className="relative text-white overflow-hidden min-h-[600px] sm:min-h-[650px] lg:min-h-[700px] flex items-center">
+  {/* Image de fond */}
+  <div className="absolute inset-0">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+  src="/images/hero-bg.jpg"
+  alt="Hôtel au Bénin"
+  className="absolute inset-0 w-full h-full object-cover object-right-top sm:object-top"
+/>
+    {/* Overlay léger pour garder l'image claire */}
+<div className="absolute inset-0 bg-black/35" />
+{/* Légère bande sombre derrière le texte seulement */}
+<div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/20" />
+  </div>
 
-          <div className="relative max-w-5xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-              <Compass className="w-4 h-4" />
-              La 1ère plateforme d&apos;hébergement au Bénin
-            </div>
+  {/* Bande tricolore en haut */}
+  <div className="absolute top-0 left-0 right-0 h-1 flex z-10">
+    <div className="flex-1 bg-[#008751]" />
+    <div className="flex-1 bg-[#FCD116]" />
+    <div className="flex-1 bg-[#E8112D]" />
+  </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              Trouvez votre hôtel
-              <br />
-              <span className="bg-gradient-to-r from-yellow-200 to-cyan-200 bg-clip-text text-transparent">
-                idéal au Bénin 🇧🇯
-              </span>
-            </h1>
+  {/* Contenu */}
+  <div className="relative w-full py-24 sm:py-32 lg:py-40 px-4 z-10">
+    <div className="max-w-4xl mx-auto text-center">
+      <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-5 py-2 text-sm font-medium mb-8">
+        <Compass className="w-4 h-4 text-yellow-400" />
+        La 1ère plateforme d&apos;hébergement au Bénin
+      </div>
 
-            <p className="text-lg sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-              Réservez facilement les meilleurs hôtels, auberges et résidences
-              du pays au meilleur prix.
-            </p>
+<h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight"
+  style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)" }}
+>        Trouvez votre hôtel
+        <br />
+        idéal au Bénin
+      </h1>
 
-            {/* Barre de recherche */}
-            <form
-              onSubmit={handleSearch}
-              className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2"
-            >
-              <div className="flex-1 flex items-center gap-2 px-4">
-                <MapPin className="w-5 h-5 text-blue-600" />
-                <input
-                  type="text"
-                  value={searchCity}
-                  onChange={(e) => setSearchCity(e.target.value)}
-                  placeholder="Où voulez-vous aller ? (ex: Cotonou)"
-                  className="flex-1 py-3 outline-none text-slate-900 placeholder:text-slate-400"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold px-6 py-3 rounded-xl transition inline-flex items-center gap-2 justify-center"
-              >
-                <Search className="w-5 h-5" />
-                Rechercher
-              </button>
-            </form>
-          </div>
-        </section>
+<p className="text-lg sm:text-xl text-white mb-12 max-w-xl mx-auto leading-relaxed"
+  style={{ textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}
+>        Réservez facilement les meilleurs hôtels, auberges et résidences
+        du pays au meilleur prix.
+      </p>
+
+      <form
+        onSubmit={handleSearch}
+        className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-1.5 flex flex-col sm:flex-row gap-1.5"
+      >
+        <div className="flex-1 flex items-center gap-3 px-4">
+          <MapPin className="w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            value={searchCity}
+            onChange={(e) => setSearchCity(e.target.value)}
+            placeholder="Où voulez-vous aller ? (ex: Cotonou)"
+            className="flex-1 py-3.5 outline-none text-slate-900 placeholder:text-slate-400 text-sm sm:text-base"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-8 py-3.5 rounded-xl transition-all inline-flex items-center gap-2 justify-center"
+        >
+          <Search className="w-5 h-5" />
+          <span>Rechercher</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {/* Bande tricolore en bas */}
+  <div className="absolute bottom-0 left-0 right-0 h-1 flex z-10">
+    <div className="flex-1 bg-[#008751]" />
+    <div className="flex-1 bg-[#FCD116]" />
+    <div className="flex-1 bg-[#E8112D]" />
+  </div>
+</section>
 
         {/* FEATURES */}
         <section className="py-16 sm:py-20 max-w-7xl mx-auto px-4">
@@ -235,14 +260,9 @@ export default function HomePage() {
         {/* FOOTER */}
         <footer className="bg-slate-900 text-slate-400 py-12 px-4">
           <div className="max-w-7xl mx-auto text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <HotelIcon className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">
-                Hotel<span className="text-blue-500">Benin</span>
-              </span>
-            </div>
+            <div className="flex justify-center mb-4">
+  <Logo size="md" linkTo="/" />
+</div>
             <p className="text-sm">
               © 2025 HotelBenin. Tous droits réservés.
             </p>

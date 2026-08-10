@@ -73,10 +73,20 @@ export default function OwnerHeader({ onMenuClick }: OwnerHeaderProps) {
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-xs">
-              {user.prenom?.charAt(0)}
-              {user.nom?.charAt(0)}
-            </div>
+            {user.avatar ? (
+  /* eslint-disable-next-line @next/next/no-img-element */
+  <img
+    src={user.avatar}
+    alt={user.prenom}
+    className="w-8 h-8 rounded-full object-cover"
+    key={user.avatar}
+  />
+) : (
+  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-xs">
+    {user.prenom?.charAt(0)}
+    {user.nom?.charAt(0)}
+  </div>
+)}
             <div className="hidden sm:block text-left">
               <p className="text-sm font-medium text-slate-900 leading-tight">
                 {user.prenom}

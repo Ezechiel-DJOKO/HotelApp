@@ -22,6 +22,7 @@ import {
   HelpCircle,
   TrendingUp,
 } from "lucide-react";
+import Logo from "@/components/shared/ui/Logo";
 
 interface MenuItem {
   label: string;
@@ -143,26 +144,34 @@ export default function AdminSidebar({
 
   const SidebarContent = () => (
     <>
-      <div className="h-16 flex items-center gap-2 px-6 border-b border-slate-700 flex-shrink-0">
-        <div className="bg-gradient-to-br from-red-500 to-orange-500 p-2 rounded-lg">
-          <ShieldAlert className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-white leading-tight">
-            HotelBenin
-          </p>
-          <p className="text-xs text-red-300 leading-tight font-semibold">
-            ADMIN
-          </p>
-        </div>
-      </div>
+      <div className="h-16 flex items-center gap-2 px-4 border-b border-slate-700 flex-shrink-0">
+  <Logo size="sm" showText={false} linkTo="/admin" />
+  <div>
+    <p className="text-sm font-bold text-white leading-tight">
+      HotelBenin
+    </p>
+    <p className="text-xs text-red-300 leading-tight font-semibold">
+      ADMIN
+    </p>
+  </div>
+</div>
 
       <div className="p-4 border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {user.prenom?.charAt(0)}
-            {user.nom?.charAt(0)}
-          </div>
+          {user.avatar ? (
+  /* eslint-disable-next-line @next/next/no-img-element */
+  <img
+    src={user.avatar}
+    alt={user.prenom}
+    className="w-10 h-10 rounded-full object-cover"
+    key={user.avatar}
+  />
+) : (
+  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+    {user.prenom?.charAt(0)}
+    {user.nom?.charAt(0)}
+  </div>
+)}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">
               {user.prenom} {user.nom}

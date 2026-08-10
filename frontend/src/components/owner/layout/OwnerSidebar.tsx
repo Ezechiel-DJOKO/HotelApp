@@ -18,6 +18,7 @@ import {
   Bell,
   HelpCircle,
 } from "lucide-react";
+import Logo from "@/components/shared/ui/Logo";
 
 interface MenuItem {
   label: string;
@@ -125,27 +126,35 @@ export default function OwnerSidebar({
   const SidebarContent = () => (
     <>
       {/* Logo Owner */}
-      <div className="h-16 flex items-center gap-2 px-6 border-b border-slate-200 flex-shrink-0">
-        <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-900 leading-tight">
-            HotelBenin
-          </p>
-          <p className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight font-semibold">
-            PROPRIÉTAIRE
-          </p>
-        </div>
-      </div>
+      <div className="h-16 flex items-center gap-2 px-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+  <Logo size="sm" showText={false} linkTo="/owner" />
+  <div>
+    <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+      HotelBenin
+    </p>
+    <p className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight font-semibold">
+      PROPRIÉTAIRE
+    </p>
+  </div>
+</div>
 
       {/* Info utilisateur */}
       <div className="p-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {user.prenom?.charAt(0)}
-            {user.nom?.charAt(0)}
-          </div>
+          {user.avatar ? (
+  /* eslint-disable-next-line @next/next/no-img-element */
+  <img
+    src={user.avatar}
+    alt={user.prenom}
+    className="w-10 h-10 rounded-full object-cover"
+    key={user.avatar}
+  />
+) : (
+  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+    {user.prenom?.charAt(0)}
+    {user.nom?.charAt(0)}
+  </div>
+)}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-900 truncate">
               {user.prenom} {user.nom}

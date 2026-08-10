@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import GoogleTranslate from "@/components/shared/ui/GoogleTranslate";
 import ThemeToggle from "../ui/ThemeToggle";
+import Logo from "../ui/Logo";
 
 export default function PublicNavbar() {
   const { isAuthenticated, user } = useAuthStore();
@@ -29,14 +30,7 @@ export default function PublicNavbar() {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <Hotel className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <span className="text-lg sm:text-xl font-bold text-gray-900">
-              Hotel<span className="text-blue-600">Benin</span>
-            </span>
-          </Link>
+          <Logo size="md" linkTo="/" />
 
           <div className="hidden md:flex items-center gap-4">
             <Link
