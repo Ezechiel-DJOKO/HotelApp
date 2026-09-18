@@ -192,7 +192,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-                  🔥 Hôtels populaires
+                  Hôtels populaires
                 </h2>
                 <p className="text-slate-600">
                   Découvrez les hôtels les mieux notés

@@ -15,6 +15,7 @@ const { simulerPaiement } = require('../util/paymentSimulator');
 const { genererRecuPDF } = require('../util/pdfGenerator');
 const { createNotification } = require('../util/notificationService');
 const sendEmail = require('../util/sendEmail');
+const { initierPaiementCinetPay, verifierPaiementCinetPay } = require('../util/cinetpayService');
 
 // ============================================
 // INITIER UN PAIEMENT
@@ -153,10 +154,52 @@ exports.confirmerPaiement = async (req, res, next) => {
                 methode,
                 telephone
             });
-        } else {
-            // TODO : Intégration CinetPay réelle (plus tard)
-            return errorResponse(res, 'Mode de paiement non implémenté', 501);
-        }
+        } else if (paymentMode === 'sandbox' || paymentMode === 'live') {
+    console.log(`💳 Mode ${paymentMode.toUpperCase()} - CinetPay`);
+    
+    const transactionIdCinetPay = `TX-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    
+    const cinetpayResult = await initierPaiementCinetPay({
+        transaction_id: transactionIdCinetPay,
+        amount: reservation.prixTotal,
+        description: `Reservation ${hotel.nom} - ${chambre.nom}`,
+        customer_name: utilisateur.nom,
+        customer_surname: utilisateur.prenom,
+        customer_email: utilisateur.email,
+        customer_phone_number: telephone || utilisateur.phone || '',
+    });
+
+    console.log('📥 Résultat CinetPay:', JSON.stringify(cinetpayResult, null, 2));
+
+    if (!cinetpayResult.success) {
+        return errorResponse(res, cinetpayResult.error || 'Erreur CinetPay', 400);
+    }
+
+    // Créer une transaction en attente
+    const transactionEnAttente = await Transaction.create({
+        reservation: reservation._id,
+        utilisateur: utilisateurId,
+        hotel: hotel._id,
+        numeroTransaction: transactionIdCinetPay,
+        montantTotal: reservation.prixTotal,
+        tauxCommission: commission.tauxCommission,
+        montantCommission: commission.montantCommission,
+        montantHotel: commission.montantHotel,
+        methode,
+        telephonePayeur: telephone,
+        statut: 'en_attente',
+        referenceExterne: cinetpayResult.paymentToken,
+    });
+
+    // Retourner l'URL de paiement CinetPay
+    return successResponse(res, {
+        redirectUrl: cinetpayResult.paymentUrl,
+        transactionId: transactionEnAttente._id,
+        cinetpayTransactionId: transactionIdCinetPay,
+    }, 'Redirection vers CinetPay', 200);
+} else {
+    return errorResponse(res, 'Mode de paiement non implémenté', 501);
+}
 
         // Si paiement échoué
         if (!resultatPaiement.success) {
