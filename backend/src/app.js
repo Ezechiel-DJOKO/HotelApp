@@ -35,11 +35,18 @@ const app = express();
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ============================================
-// SÉCURITÉ
+// SÉCURITÉ & CORS (Infaillible pour Vercel)
 // ============================================
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Autoriser Vercel, Localhost et toutes les variantes dynamiquement
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: function (origin, callback) {
+        // Autorise les requêtes (Vercel, Localhost, apps mobiles, Postman)
+        callback(null, true);
+    },
     credentials: true
 }));
 
