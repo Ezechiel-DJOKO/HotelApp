@@ -2,69 +2,66 @@ const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const SVG_PATH = path.join(__dirname, "../public/icons/logo.svg");
+// On utilise TON nouveau logo.jpg comme source
+const LOGO_PATH = path.join(__dirname, "../public/logo.jpg");
 const OUTPUT_DIR = path.join(__dirname, "../public/icons");
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 
 async function generateIcons() {
-  console.log("🎨 Génération des icônes HotelBenin...\n");
+  console.log("🎨 Régénération des icônes PWA depuis logo.jpg...\n");
 
-  // Vérifier que le SVG existe
-  if (!fs.existsSync(SVG_PATH)) {
-    console.error("❌ Fichier logo.svg introuvable :", SVG_PATH);
+  if (!fs.existsSync(LOGO_PATH)) {
+    console.error("❌ Fichier public/logo.jpg introuvable !");
     process.exit(1);
   }
 
-  const svgBuffer = fs.readFileSync(SVG_PATH);
+  // S'assurer que le dossier public/icons existe
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  }
 
   for (const size of sizes) {
     const outputPath = path.join(OUTPUT_DIR, `icon-${size}x${size}.png`);
-    
     try {
-      await sharp(svgBuffer)
-        .resize(size, size)
+      await sharp(LOGO_PATH)
+        .resize(size, size, { fit: 'cover' })
         .png()
         .toFile(outputPath);
-      
-      console.log(`✅ Icône ${size}x${size} créée`);
+      console.log(`✅ Icône PWA ${size}x${size} créée`);
     } catch (error) {
       console.error(`❌ Erreur pour ${size}x${size}:`, error.message);
     }
   }
 
-  // Bonus : Créer un favicon.ico (32x32)
+  // Favicon (32x32)
   try {
-    await sharp(svgBuffer)
+    await sharp(LOGO_PATH)
       .resize(32, 32)
       .png()
       .toFile(path.join(OUTPUT_DIR, "favicon.png"));
-    
-    // Copier aussi comme favicon principal
+
     fs.copyFileSync(
       path.join(OUTPUT_DIR, "favicon.png"),
       path.join(__dirname, "../public/favicon.ico")
     );
-    
-    console.log("✅ Favicon créé");
+    console.log("✅ Favicon mis à jour");
   } catch (error) {
     console.error("❌ Erreur favicon:", error.message);
   }
 
-  // Bonus : Apple Touch Icon
+  // Apple Touch Icon (180x180)
   try {
-    await sharp(svgBuffer)
+    await sharp(LOGO_PATH)
       .resize(180, 180)
       .png()
       .toFile(path.join(OUTPUT_DIR, "apple-touch-icon.png"));
-    
     console.log("✅ Apple Touch Icon créée");
   } catch (error) {
     console.error("❌ Erreur apple-touch-icon:", error.message);
   }
 
-  console.log("\n🎉 Toutes les icônes ont été générées avec succès !");
-  console.log(`📂 Dossier : ${OUTPUT_DIR}`);
+  console.log("\n🎉 Toutes les icônes PWA ont été mises à jour avec ton nouveau logo !");
 }
 
 generateIcons().catch(console.error);
