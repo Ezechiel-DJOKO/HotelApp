@@ -59,11 +59,20 @@ export const authService = {
     return res.data;
   },
 
-  // Reset mot de passe
+  // Reset mot de passe avec OTP
   resetPassword: async (email: string, otpCode: string, newPassword: string) => {
     const res = await api.post<ApiResponse<null>>("/auth/reset-password", {
       email,
       otpCode,
+      newPassword,
+    });
+    return res.data;
+  },
+
+  // Changer mot de passe (connecté)
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    const res = await api.post<ApiResponse<null>>("/auth/change-password", {
+      oldPassword,
       newPassword,
     });
     return res.data;
