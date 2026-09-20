@@ -191,20 +191,56 @@ exports.renvoieOTP = async (req, res, next) => {
     }
 };
 
-exports.connexion = async (req,res,next) => {
-    try{
-        const {email,password} = req.body;
-        const utilisateur = await Utilisateur.findOne({email}).select('+password');
-        if (!utilisateur || !(await utilisateur.comparePassword(password))){
-            return errorResponse(res, "Email ou mot de passe incorrect.",400);
+exports.connexion = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+        const cleanEmail = email.toLowerCase().trim();
+
+        const utilisateur = await Utilisateur.findOne({ email: cleanEmail }).select('+password');
+        if (!utilisateur || !(await utilisateur.comparePassword(password))) {
+            return errorResponse(res, "Email ou mot de passe incorrect.", 400);
         }
-        if (!utilisateur.isActive || !utilisateur.isVerified){
-            return errorResponse(res, "Compte non vérifiée.\n Vérifiez votre email.",403);
+
+        // Si le compte n'est PAS encore vérifié
+        if (!utilisateur.isVerified) {
+            // On génère un nouveau code OTP
+            const otp = utilisateur.generateOTP();
+            await utilisateur.save({ validateBeforeSave: false });
+
+            console.log(`🔑 Nouvel OTP généré lors de la connexion pour ${utilisateur.email} : ${otp}`);
+
+            // Envoi de l'email avec le code
+            sendEmail({
+                to: utilisateur.email,
+                subject: 'Votre code de vérification - HotelBenin',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <h2 style="color: #2563eb;">Code de vérification de votre compte</h2>
+                        <p>Bonjour <strong>${utilisateur.prenom}</strong>,</p>
+                        <p>Vous avez tenté de vous connecter mais votre compte n'est pas encore vérifié.</p>
+                        <p>Voici votre code de vérification :</p>
+                        <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                            <span style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">${otp}</span>
+                        </div>
+                    </div>
+                `
+            }).catch(e => console.error("Erreur email OTP connexion:", e.message));
+
+            return res.status(403).json({
+                success: false,
+                requireOtp: true,
+                message: "Compte non vérifié. Un nouveau code OTP vous a été envoyé par email.",
+                email: utilisateur.email,
+                fallbackOtp: (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP === 'true') ? otp : undefined
+            });
         }
+
         utilisateur.lastLogin = Date.now();
-        await utilisateur.save({validateBeforeSave: false});
+        await utilisateur.save({ validateBeforeSave: false });
+
         const token = generateToken(utilisateur._id);
-        successResponse(res,{
+
+        return successResponse(res, {
             utilisateur: {
                 _id: utilisateur._id,
                 id: utilisateur._id,
@@ -213,12 +249,13 @@ exports.connexion = async (req,res,next) => {
                 prenom: utilisateur.prenom,
                 phone: utilisateur.phone,
                 avatar: utilisateur.avatar,
-                role: utilisateur.role, 
+                role: utilisateur.role,
                 isVerified: utilisateur.isVerified,
                 nomComplet: utilisateur.nomComplet,
-            },token
+            },
+            token
         }, "Connexion réussie.");
-    }catch(error){
+    } catch (error) {
         next(error);
     }
 };

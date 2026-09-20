@@ -20,7 +20,7 @@ export default function LoginPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -37,11 +37,25 @@ export default function LoginPage() {
       } else {
         router.push("/client");
       }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Erreur";
-      if (msg.toLowerCase().includes("verif")) {
+    } catch (error: any) {
+      const msg = error instanceof Error ? error.message : "Erreur de connexion";
+      const lowerMsg = msg.toLowerCase();
+
+      // Prise en compte des accents (vérif / véri / requireOtp)
+      if (
+        lowerMsg.includes("véri") ||
+        lowerMsg.includes("verif") ||
+        error.response?.data?.requireOtp
+      ) {
         sessionStorage.setItem("otp_email", form.email);
-        toast.error("Compte non vérifié. Entrez le code OTP.");
+
+        const fallbackOtp = error.response?.data?.fallbackOtp;
+        if (fallbackOtp) {
+          toast.success(`Votre code OTP est : ${fallbackOtp}`, { duration: 10000 });
+        } else {
+          toast.error("Compte non vérifié. Un code OTP vous a été envoyé par email.");
+        }
+
         router.push("/auth/verify-otp");
       } else {
         toast.error(msg);
