@@ -35,7 +35,7 @@ export default function RegisterPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+      const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (form.password !== form.password_confirm) {
@@ -46,25 +46,33 @@ export default function RegisterPage() {
       toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(form.email)) {
-      toast.error("Format d'email invalide");
-      return;
-    }
 
     setLoading(true);
     try {
-      await authService.register(form);
-      toast.success("Inscription réussie ! Vérifiez votre email.");
+      const response = await authService.register(form);
+      
+      // Si c'est le 1er inscrit -> Admin automatique
+      if (response.data?.role === "admin") {
+        toast.success("Compte Administrateur créé avec succès ! Connectez-vous.");
+        router.push("/auth/login");
+        return;
+      }
+
+      // Si OTP est renvoyé en secours
+      if (response.data?.fallbackOtp) {
+        toast.success(`Votre code OTP est : ${response.data.fallbackOtp}`, { duration: 10000 });
+      } else {
+        toast.success("Inscription réussie ! Vérifiez votre email.");
+      }
+
       sessionStorage.setItem("otp_email", form.email);
       router.push("/auth/verify-otp");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erreur");
+      toast.error(error instanceof Error ? error.message : "Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">

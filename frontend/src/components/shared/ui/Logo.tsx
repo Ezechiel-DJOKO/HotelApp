@@ -1,42 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
-  showText?: boolean;
   linkTo?: string;
   className?: string;
 }
 
 const sizeMap = {
-  sm: { img: "w-8 h-8", text: "text-lg" },
-  md: { img: "w-10 h-10", text: "text-xl" },
-  lg: { img: "w-12 h-12", text: "text-2xl" },
-  xl: { img: "w-16 h-16", text: "text-3xl" },
+  sm: "w-12",
+  md: "w-16",
+  lg: "w-24",
+  xl: "w-32",
 };
 
 export default function Logo({
   size = "md",
-  showText = true,
   linkTo = "/",
   className = "",
 }: LogoProps) {
   const s = sizeMap[size];
 
   const content = (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className={`flex items-center justify-center ${className}`}>
+      {/* On utilise ton nouveau logo */}
       <img
-        src="/icons/icon-192x192.png"
-        alt="HotelBenin"
-        className={`${s.img} rounded-lg`}
+        src="/logo.jpg"
+        alt="Hotel Benin Logo"
+        className={`${s} object-contain rounded-lg shadow-sm bg-white p-1`}
       />
-      {showText && (
-        <span className={`${s.text} font-bold text-slate-900 dark:text-white`}>
-          Hotel<span className="text-blue-600">Benin</span>
-        </span>
-      )}
     </div>
   );
 
