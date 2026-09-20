@@ -1,8 +1,11 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+// URL par défaut si la variable Vercel n'est pas encore chargée
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://hotelapp-benin.onrender.com/api";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,10 +27,10 @@ api.interceptors.response.use(
     const message =
       error.response?.data?.message || "Une erreur est survenue";
 
-    // Si le token est invalide → déconnexion auto
+    // Si le token est invalide -> déconnexion auto
     if (error.response?.status === 401) {
       Cookies.remove("token");
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth")) {
         window.location.href = "/auth/login";
       }
     }
