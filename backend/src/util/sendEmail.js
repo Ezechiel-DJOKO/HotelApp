@@ -1,14 +1,27 @@
 const nodemailer = require('nodemailer');
-const createTransporter = require('../config/email');
 
 const sendEmail = async (options) => {
     if (!options.to) {
-        throw new Error('❌ Destinataire (to) manquant');
+        console.error("❌ sendEmail: Destinataire manquant");
+        return;
     }
 
-    const transporter = createTransporter();
+    const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: false,
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+        tls: {
+            rejectUnauthorized: false
+        },
+        connectionTimeout: 5000, // Timeout de 5s max
+        socketTimeout: 5000
+    });
 
-    const message = {
+    const mailOptions = {
         from: process.env.EMAIL_FROM || `HotelBenin <${process.env.EMAIL_USER}>`,
         to: options.to,
         subject: options.subject,
@@ -16,25 +29,13 @@ const sendEmail = async (options) => {
         html: options.html,
     };
 
-    console.log('');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📧 ENVOI EMAIL');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`   De        : ${message.from}`);
-    console.log(`   À         : ${message.to}`);
-    console.log(`   Sujet     : ${message.subject}`);
-
     try {
-        const info = await transporter.sendMail(message);
-        console.log(`✅ EMAIL ENVOYÉ`);
-        console.log(`   Message ID : ${info.messageId}`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('');
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`✅ Email envoyé à : ${options.to} (MessageId: ${info.messageId})`);
         return info;
     } catch (error) {
-        console.error(`❌ ÉCHEC ENVOI : ${error.message}`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        throw new Error(`Échec envoi email: ${error.message}`);
+        console.error(`❌ Échec envoi email à ${options.to}:`, error.message);
+        // On ne fait pas crash l'application
     }
 };
 

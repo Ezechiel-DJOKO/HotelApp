@@ -147,47 +147,46 @@ exports.verificationOTP = async (req,res,next) => {
     }
 };
 
-exports.renvoieOTP = async (req,res,next) => {
-    try{
-        const {email} = req.body;
-        const utilisateur = await Utilisateur.findOne({email});
-        if(!utilisateur){
-            return errorResponse(res, "Utilisateur non trouvé",404);
+exports.renvoieOTP = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const cleanEmail = email.toLowerCase().trim();
+        const utilisateur = await Utilisateur.findOne({ email: cleanEmail });
+        
+        if (!utilisateur) {
+            return errorResponse(res, "Utilisateur non trouvé", 404);
         }
 
-        if (utilisateur.isVerified){
-            return errorResponse(res, "Ce compte est déjà vérifié.",400);
+        if (utilisateur.isVerified) {
+            return errorResponse(res, "Ce compte est déjà vérifié.", 400);
         }
 
-        // Générer un nouveau OTP
         const otp = utilisateur.generateOTP();
-        await utilisateur.save({validateBeforeSave: false});
+        await utilisateur.save({ validateBeforeSave: false });
 
-        // Renvoyer l'email
-        await sendEmail({
+        console.log(`🔑 Nouvel OTP pour ${utilisateur.email} : ${otp}`);
+
+        // Envoi asynchrone (non bloquant)
+        sendEmail({
             to: utilisateur.email,
-            subject: 'Nouveau code de vérification',
-            text:`Bonjour ${utilisateur.prenom},\n\n Votre nouveau code est : ${otp}\n\nCe code est valable pendant 10 minutes.\n\nCordialement,\nL'équipe Mobile API`,
+            subject: 'Nouveau code de vérification - HotelBenin',
+            text: `Bonjour ${utilisateur.prenom},\n\nVotre nouveau code est : ${otp}`,
             html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">Vérification de votre compte</h2>
+                    <p>Bonjour <strong>${utilisateur.prenom}</strong>,</p>
+                    <p>Votre nouveau code de vérification est :</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                        <span style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">${otp}</span>
+                    </div>
+                </div>
+            `
+        }).catch(e => console.error("Erreur renvoi OTP:", e.message));
 
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #667eea;">Vérification de votre compte</h2>
-            <p>Bonjour <strong>${utilisateur.prenom}</strong>,</p>
-            <p>Votre nouveau code de vérification est :</p>
-            <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px;">${otp}</span>
-            </div>
-            <p>Ce code est valable pendant <strong>10 minutes</strong>.</p>
-            <p>Si vous n'avez pas demandé ce code, ignorez cet email.</p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-            <p style="color: #6b7280; font-size: 12px;">© 2024 Mobile API. Tous droits réservés.</p>
-            </div>`
-        });
-
-        successResponse(res,{
-            otpCode: process.env.NODE_ENV === "development" ? otp : undefined
-        }, "Nouveau code otp envoyé");
-    }catch(error){
+        return successResponse(res, {
+            fallbackOtp: (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP === 'true') ? otp : undefined
+        }, "Nouveau code OTP envoyé.");
+    } catch (error) {
         next(error);
     }
 };
@@ -224,39 +223,45 @@ exports.connexion = async (req,res,next) => {
     }
 };
 
-exports.forgotPassword = async (req,res,next) => {
-    try{
-        const {email} = req.body;
-        const utilisateur = await Utilisateur.findOne({email});
-        if (!utilisateur){
-            return successResponse(res,{}," Si cet email existe, un code de réinstalisation a été envoyé.");
+exports.forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const cleanEmail = email.toLowerCase().trim();
+        const utilisateur = await Utilisateur.findOne({ email: cleanEmail });
+        
+        if (!utilisateur) {
+            // Sécurité : Réponse positive générique
+            return successResponse(res, {}, "Si cet email existe, un code de réinitialisation a été envoyé.");
         }
-        const otp = utilisateur.generateResetOTP();
-        await utilisateur.save({validateBeforeSave: false});
-        await sendEmail({
-            to: utilisateur.email,
-            subject: 'Réinitialisation de votre mot de passe',
-            text:`Bonjour ${utilisateur.prenom},\n\nVotre code de réinitialisation est : ${otp}\n\nCe code est valable pendant 10 minutes.\n\nCordialement,\nL'équipe Mobile API`,
-            html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #667eea;">Réinitialisation de votre mot de passe</h2>
-            <p>Bonjour <strong>${utilisateur.prenom}</strong>,</p>
-            <p>Votre code de réinitialisation est :</p>
-            <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px;">${otp}</span>
-            </div>
-            <p>Ce code est valable pendant <strong>10 minutes</strong>.</p>
-            <p>Si vous n'avez pas demandé ce code, ignorez cet email.</p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-            <p style="color: #6b7280; font-size: 12px;">© 2024 Mobile API. Tous droits réservés.</p>
-            </div>`
-        });
 
-        successResponse(res,{
-            email,
-            resetOtp: process.env.NODE_ENV === 'development' ? otp : undefined
-        }, "Code de réinitialisation envoyé")
-    }catch(error){
+        const otp = utilisateur.generateResetOTP();
+        await utilisateur.save({ validateBeforeSave: false });
+
+        console.log(`🔑 Code Reset OTP pour ${utilisateur.email} : ${otp}`);
+
+        // Envoi asynchrone (non bloquant)
+        sendEmail({
+            to: utilisateur.email,
+            subject: 'Réinitialisation de votre mot de passe - HotelBenin',
+            text: `Bonjour ${utilisateur.prenom},\n\nVotre code de réinitialisation est : ${otp}\n\nCe code est valable pendant 10 minutes.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2563eb;">Réinitialisation de votre mot de passe</h2>
+                    <p>Bonjour <strong>${utilisateur.prenom}</strong>,</p>
+                    <p>Votre code de réinitialisation est :</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                        <span style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">${otp}</span>
+                    </div>
+                    <p>Ce code est valable pendant 10 minutes.</p>
+                </div>
+            `
+        }).catch(e => console.error("Erreur email reset:", e.message));
+
+        return successResponse(res, {
+            email: cleanEmail,
+            fallbackOtp: (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP === 'true') ? otp : undefined
+        }, "Code de réinitialisation envoyé.");
+    } catch (error) {
         next(error);
     }
 };
