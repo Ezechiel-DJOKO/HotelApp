@@ -28,7 +28,7 @@ const opportuniteRoutes = require('./routes/Opportunite.route');
 // CRÉER L'APP EXPRESS
 // ============================================
 const app = express();
-
+app.set('trust proxy', 1);
 // ============================================
 // SERVIR LES IMAGES UPLOADÉES
 // ============================================

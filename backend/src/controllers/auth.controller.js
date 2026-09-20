@@ -42,6 +42,12 @@ exports.inscription = async (req, res, next) => {
         const otp = utilisateur.generateOTP();
         await utilisateur.save();
 
+        // 🌟 AFFICHER L'OTP DANS LES LOGS RENDER
+        console.log(`🔑 ============================================`);
+        console.log(`🔑 CODE OTP GÉNÉRÉ POUR : ${utilisateur.email}`);
+        console.log(`🔑 VOTRE CODE OTP EST   : ${otp}`);
+        console.log(`🔑 ============================================`);
+
         console.log(`✅ Utilisateur créé : ${utilisateur.email} (Role: ${utilisateur.role})`);
 
         // 🚀 NOUVEAU : On envoie l'email SANS AWAIT pour ne pas bloquer le frontend !
