@@ -1,31 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 
-interface LogoProps {
+export interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
+  showText?: boolean;
   linkTo?: string;
   className?: string;
 }
 
 const sizeMap = {
-  sm: "w-12",
-  md: "w-16",
-  lg: "w-24",
-  xl: "w-32",
+  sm: "w-10 h-10",
+  md: "w-14 h-14",
+  lg: "w-20 h-20",
+  xl: "w-28 h-28",
 };
 
 export default function Logo({
   size = "md",
+  showText = true,
   linkTo = "/",
   className = "",
 }: LogoProps) {
   const s = sizeMap[size];
 
   const content = (
-    <div className={`flex items-center justify-center ${className}`}>
-      {/* On utilise ton nouveau logo */}
+    <div className={`flex items-center gap-2 ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo.jpg"
         alt="Hotel Benin Logo"
